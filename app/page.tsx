@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <div className="bg-white min-h-screen w-screen">
       <main>
-        <h1 className="text-4xl font-bold text-center py-12 text-black">Welcome to PhotoBytes Blog</h1>
+        <h1 className="text-2xl font-bold text-center py-12 text-black text-wrap">Welcome to PhotoBytes Blog</h1>
       </main>
     </div>
   )
