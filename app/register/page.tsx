@@ -8,7 +8,7 @@ export default function Register() {
   const [password, setPassword] = useState("")
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen min-w-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-md">
         <h1 className="text-2xl text-black font-bold text-center mb-6">Register</h1>
 
