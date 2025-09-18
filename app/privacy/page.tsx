@@ -46,7 +46,7 @@ export default function PrivacyPage() {
 
         <section className="mb-12">
           <h2 className="text-3xl font-bold mb-4">Consent</h2>
-          <p>
+          <p className="text-lg">
             By using our website, you consent to our Privacy Policy and agree to
             its terms.
           </p>
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
 
         <section className="mb-12">
           <h2 className="text-3xl font-bold mb-4">Information We Collect</h2>
-          <p>
+          <p className="text-lg">
             The personal information you are asked to provide, and the reasons
             why you are asked to provide it, will always be made clear at the
             point we request it.
@@ -73,7 +73,7 @@ export default function PrivacyPage() {
 
         <section className="mb-12">
           <h2 className="text-3xl font-bold mb-4">How We Use Your Information</h2>
-          <p>We may use the information we collect to:</p>
+          <p className="text-lg">We may use the information we collect to:</p>
           <ul className="list-disc ml-6 mt-4 space-y-2">
             <li>Provide, operate, and improve our website</li>
             <li>Personalize your experience</li>
@@ -86,7 +86,7 @@ export default function PrivacyPage() {
 
         <section className="mb-12">
           <h2 className="text-3xl font-bold mb-4">Log Files</h2>
-          <p>
+          <p className="text-lg">
             Like most websites, PhotoBytes Studios uses log files. These may
             include IP addresses, browser type, Internet Service Provider (ISP),
             date/time stamps, referring/exit pages, and click data. This
@@ -99,7 +99,7 @@ export default function PrivacyPage() {
 
         <section className="mb-12">
           <h2 className="text-3xl font-bold mb-4">Cookies</h2>
-          <p>
+          <p className="text-lg">
             We use cookies to store information about visitor preferences and
             the pages visited. This helps us optimize content and improve user
             experience. You can disable cookies in your browser settings if you
@@ -109,7 +109,7 @@ export default function PrivacyPage() {
 
         <section className="mb-12">
           <h2 className="text-3xl font-bold mb-4">Third-Party Services</h2>
-          <p>
+          <p className="text-lg">
             PhotoBytes Studios may work with third-party services (such as
             analytics or advertisers). These parties may use cookies or other
             technologies to measure effectiveness and personalize content. We do
@@ -121,7 +121,7 @@ export default function PrivacyPage() {
           <h2 className="text-3xl font-bold mb-4">
             Your Data Protection Rights
           </h2>
-          <p>Depending on your location, you may have rights including:</p>
+          <p className="text-lg">Depending on your location, you may have rights including:</p>
           <ul className="list-disc ml-6 mt-4 space-y-2">
             <li>The right to access your personal data</li>
             <li>The right to correct inaccurate information</li>
@@ -129,7 +129,7 @@ export default function PrivacyPage() {
             <li>The right to restrict or object to processing</li>
             <li>The right to data portability</li>
           </ul>
-          <p className="mt-4">
+          <p className="mt-4 text-lg">
             If you make a request, we will respond within one month. To exercise
             any of these rights, please contact us.
           </p>
@@ -137,7 +137,7 @@ export default function PrivacyPage() {
 
         <section className="mb-12">
           <h2 className="text-3xl font-bold mb-4">Children's Privacy</h2>
-          <p>
+          <p className="text-lg">
             We do not knowingly collect any personally identifiable information
             from children under the age of 13. If you believe your child
             provided such information, please contact us and we will promptly
@@ -147,7 +147,7 @@ export default function PrivacyPage() {
 
         <section className="mb-12 text-center">
           <h2 className="text-3xl font-bold mb-4">Contact Us</h2>
-          <p>
+          <p className="text-lg">
             If you have any questions about this Privacy Policy, please contact
             us at{' '}
             <a
