@@ -1,4 +1,7 @@
+import { Atkinson_Hyperlegible } from 'next/font/google';
 import type { Metadata } from 'next';
+
+const atkinson_hyperlegible = Atkinson_Hyperlegible({ subsets: ['latin'], weight: ['400', '700'], display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | PhotoBytes Studios',
@@ -8,9 +11,9 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <>
-      <div className="bg-white min-h-screen w-screen">
+      <div className={`bg-white min-h-screen w-screen ${atkinson_hyperlegible.className}`}>
         <main className="max-w-4xl mx-auto bg-white p-8 sm:p-12 text-gray-800 leading-relaxed">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-center mb-8">
+        <h1 className="text-3xl sm:text-5xl font-extrabold text-center mb-8">
           Privacy Policy
         </h1>
         <p className="text-center text-sm text-gray-500 mb-12">
@@ -18,7 +21,7 @@ export default function PrivacyPage() {
           Last Updated: September 2025
         </p>
 
-        <section className="mb-12">
+        <section className="mb-12 text-lg">
           <p>
             At <strong>PhotoBytes Studios</strong>, accessible from{' '}
             <a
@@ -42,7 +45,7 @@ export default function PrivacyPage() {
         <hr className="my-8 border-gray-300" />
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Consent</h2>
+          <h2 className="text-3xl font-bold mb-4">Consent</h2>
           <p>
             By using our website, you consent to our Privacy Policy and agree to
             its terms.
@@ -50,7 +53,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Information We Collect</h2>
+          <h2 className="text-3xl font-bold mb-4">Information We Collect</h2>
           <p>
             The personal information you are asked to provide, and the reasons
             why you are asked to provide it, will always be made clear at the
@@ -69,7 +72,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">How We Use Your Information</h2>
+          <h2 className="text-3xl font-bold mb-4">How We Use Your Information</h2>
           <p>We may use the information we collect to:</p>
           <ul className="list-disc ml-6 mt-4 space-y-2">
             <li>Provide, operate, and improve our website</li>
@@ -82,7 +85,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Log Files</h2>
+          <h2 className="text-3xl font-bold mb-4">Log Files</h2>
           <p>
             Like most websites, PhotoBytes Studios uses log files. These may
             include IP addresses, browser type, Internet Service Provider (ISP),
@@ -95,7 +98,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Cookies</h2>
+          <h2 className="text-3xl font-bold mb-4">Cookies</h2>
           <p>
             We use cookies to store information about visitor preferences and
             the pages visited. This helps us optimize content and improve user
@@ -105,7 +108,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Third-Party Services</h2>
+          <h2 className="text-3xl font-bold mb-4">Third-Party Services</h2>
           <p>
             PhotoBytes Studios may work with third-party services (such as
             analytics or advertisers). These parties may use cookies or other
@@ -115,7 +118,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">
+          <h2 className="text-3xl font-bold mb-4">
             Your Data Protection Rights
           </h2>
           <p>Depending on your location, you may have rights including:</p>
@@ -133,7 +136,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Children's Privacy</h2>
+          <h2 className="text-3xl font-bold mb-4">Children's Privacy</h2>
           <p>
             We do not knowingly collect any personally identifiable information
             from children under the age of 13. If you believe your child
@@ -143,7 +146,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-12 text-center">
-          <h2 className="text-2xl font-bold mb-4">Contact Us</h2>
+          <h2 className="text-3xl font-bold mb-4">Contact Us</h2>
           <p>
             If you have any questions about this Privacy Policy, please contact
             us at{' '}
