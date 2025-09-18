@@ -68,16 +68,20 @@ export default function Navbar() {
               </a>
             </nav>
             <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
+              <Link href="/login">
               <button
                 className="whitespace-nowrap text-base font-medium text-gray-500 hover:text-gray-900"
               >
                 Login
               </button>
+              </Link>
+              <Link href="/register">
               <button
                 className="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
               >
                 Register
               </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -150,18 +154,22 @@ export default function Navbar() {
                 </a>
               </div>
               <div>
+              <Link href="/register">
                 <button
                   className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
                 >
                   Register
                 </button>
+              </Link>
                 <p className="mt-6 text-center text-base font-medium text-gray-500">
                   Existing customer?{' '}
+                <Link href="/login">
                   <button
                     className="text-blue-600 hover:text-blue-500"
                   >
                     Login
                   </button>
+                </Link>
                 </p>
               </div>
             </div>

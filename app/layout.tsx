@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="bg-white mx-auto">
+    <html lang="en" className="bg-white min-w-screen mx-auto">
       <body className={`${share_tech.className} antialiased flex flex-col min-h-screen mx-auto bg-white`}>
         <Header />
         <main className="mx-auto flex-grow bg-white">
