@@ -16,7 +16,7 @@ export default async function Home() {
       <ol className="list-decimal list-inside text-black">
         {users.map((user) => (
           <li key={user.id} className="mb-2 text-black">
-            {user.name}
+            {user.email}
           </li>
         ))}
       </ol>
