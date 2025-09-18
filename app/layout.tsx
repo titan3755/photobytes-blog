@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Share_Tech } from "next/font/google";
 import "./globals.css";
 import Header from '../components/common/Navbar';
 import Footer from '@/components/common/Footer';
 
-const inter = Inter({ subsets: ["latin"] });
+const share_tech = Share_Tech({ subsets: ['latin'], weight: '400', display: 'swap' });
 
 export const metadata: Metadata = {
   title: "PhotoBytes Blog",
@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-white mx-auto">
-      <body className={`${inter.className} antialiased flex flex-col min-h-screen mx-auto bg-white`}>
+      <body className={`${share_tech.className} antialiased flex flex-col min-h-screen mx-auto bg-white`}>
         <Header />
         <main className="mx-auto flex-grow bg-white">
           {children}
