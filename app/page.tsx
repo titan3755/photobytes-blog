@@ -11,7 +11,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen min-w-screen bg-gray-50 flex flex-col items-center justify-center -mt-16">
       <h1 className="text-4xl font-bold mb-8 text-black">
-        Superblog
+        Superblog (Photobytes)
       </h1>
       <ol className="list-decimal list-inside text-black">
         {users.map((user) => (
