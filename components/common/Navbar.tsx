@@ -154,13 +154,13 @@ export default function Navbar() {
                 </a>
               </div>
               <div>
-              <Link href="/register">
-                <button
-                  className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  Register
-                </button>
-              </Link>
+                <Link href="/register">
+                  <button
+                    className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Register
+                  </button>
+                </Link>
                 <p className="mt-6 text-center text-base font-medium text-gray-500">
                   Existing customer?{' '}
                 <Link href="/login">
