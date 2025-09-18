@@ -33,7 +33,7 @@ export default function Register() {
             placeholder="Email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 text-black border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <input
@@ -41,7 +41,7 @@ export default function Register() {
             placeholder="Username"
             value={username}
             onChange={e => setUsername(e.target.value)}
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 text-black border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <input
@@ -49,7 +49,7 @@ export default function Register() {
             placeholder="Password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 text-black border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <button
