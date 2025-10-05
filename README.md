@@ -1,1 +1,3 @@
 # PhotoBytes Blog
+
+## {ACTIVE DEVELOPMENT ONGOING}
