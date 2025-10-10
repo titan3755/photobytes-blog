@@ -1,2 +1,8 @@
-import { handlers } from "@/auth" // Referring to the auth.ts we just created
-export const { GET, POST } = handlers
+// src/app/api/auth/[...nextauth]/route.ts
+import { handlers } from "@/auth";
+
+// Export the GET and POST handlers for NextAuth
+export const { GET, POST } = handlers;
+
+// Ensure Node.js runtime (not Edge)
+export const runtime = "nodejs";
