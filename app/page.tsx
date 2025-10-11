@@ -14,7 +14,7 @@ export default async function Home() {
         Superblog (Photobytes)
       </h1>
       <ol className="list-decimal list-inside text-black">
-        {users.map((user) => (
+        {users.map((user: { id: string; email: string }) => (
           <li key={user.id} className="mb-2 text-black">
             {user.email}
           </li>
