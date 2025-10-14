@@ -26,33 +26,31 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials: Record<"email" | "username" | "password", string> | undefined) {
-        if (!credentials) return null;
-
-        const { email, username, password } = credentials;
-
-        if (!password) return null;
-
-        const user = await prisma.user.findFirst({
-          where: {
-            OR: [
-              email ? { email } : undefined,
-              username ? { username } : undefined,
-            ].filter(Boolean) as any,
-          },
-        });
-
-        // Ensure password exists and is a string
-        if (!user || typeof user.password !== "string") {
-          return null;
-        }
-
-        const valid = await bcrypt.compare(password, user.password);
-        if (!valid) return null;
-
-        return user;
+      async authorize(credentials) {
+      if (
+      !credentials ||
+      (typeof credentials.password !== "string") ||
+      (!credentials.email && !credentials.username)
+      ) {
+        return null;
       }
-    }),
+      const { email, username, password } = credentials;
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            email ? { email: email as string } : undefined,
+            username ? { username: username as string } : undefined,
+          ].filter(Boolean) as any,
+        },
+      });
+      if (!user || typeof user.password !== "string") {
+        return null;
+      }
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) return null;
+      return user;
+  },
+})
   ],
   session: { strategy: "jwt" },
   pages: {
