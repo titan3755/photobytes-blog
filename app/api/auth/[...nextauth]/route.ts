@@ -26,24 +26,32 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.password) return null;
+      async authorize(credentials: Record<"email" | "username" | "password", string> | undefined) {
+        if (!credentials) return null;
 
-        // Find user by email or username
+        const { email, username, password } = credentials;
+
+        if (!password) return null;
+
         const user = await prisma.user.findFirst({
           where: {
             OR: [
-              { email: credentials.email },
-              { username: credentials.username },
-            ],
+              email ? { email } : undefined,
+              username ? { username } : undefined,
+            ].filter(Boolean) as any,
           },
         });
 
-        if (!user || !user.password) return null;
+        // Ensure password exists and is a string
+        if (!user || typeof user.password !== "string") {
+          return null;
+        }
 
-        const valid = await bcrypt.compare(credentials.password, user.password);
-        return valid ? user : null;
-      },
+        const valid = await bcrypt.compare(password, user.password);
+        if (!valid) return null;
+
+        return user;
+      }
     }),
   ],
   session: { strategy: "jwt" },
