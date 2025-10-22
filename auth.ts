@@ -1,20 +1,16 @@
-// auth.ts
-
 import NextAuth from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import prisma from '@/lib/prisma';
-import { authConfig } from './auth.config'; // 1. Import the light config
-
-// 2. Import the heavy providers here
+import { authConfig } from './auth.config';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcrypt';
+import type { Role } from '@prisma/client';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  ...authConfig, // 3. Spread the light config (pages, session, Google, Facebook)
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
   providers: [
-    ...authConfig.providers, // 4. Include providers from the light config
-    // 5. Add the heavy CredentialsProvider
+    ...authConfig.providers,
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
@@ -48,4 +44,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token.role) {
+        session.user.role = token.role as Role;
+      }
+      return session;
+    },
+  },
 });
