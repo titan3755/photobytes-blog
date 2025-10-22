@@ -1,6 +1,7 @@
 import type { NextAuthConfig } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
+import { NextResponse } from 'next/server';
 export const authConfig = {
   providers: [
     GoogleProvider({
@@ -23,13 +24,21 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const isAdmin = auth?.user?.role === 'ADMIN';
       if (pathname.startsWith('/admin')) {
-        return isLoggedIn && isAdmin;
+        if (isLoggedIn) {
+          if (isAdmin) {
+            return true;
+          } else {
+            return NextResponse.redirect(new URL('/forbidden', nextUrl));
+          }
+        }
+        return false;
       }
       if (
         pathname.startsWith('/dashboard') ||
         pathname.startsWith('/profile')
       ) {
-        return isLoggedIn;
+        if (isLoggedIn) return true;
+        return false;
       }
       return true;
     },
