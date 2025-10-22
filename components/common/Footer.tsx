@@ -29,7 +29,6 @@ const TwitterIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function Footer() {
   return (
-    // Removed dark:bg-gray-900
     <footer className="bg-gray-100">
       <div className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="md:grid md:grid-cols-4 md:gap-8">
@@ -46,12 +45,10 @@ export default function Footer() {
                 className="h-8 w-8"
                 unoptimized={true}
               />
-              {/* Removed dark:text-white */}
               <span className="self-center text-2xl font-semibold whitespace-nowrap text-gray-900">
                 PhotoBytes Blog
               </span>
             </Link>
-            {/* Removed dark:text-gray-400 */}
             <p className="text-gray-500 text-sm">
               The official blog for PhotoBytes Studios, covering tech,
               photography, and development.
@@ -59,7 +56,6 @@ export default function Footer() {
           </div>
           <div className="hidden md:block"></div>
           <div className="mt-10 md:mt-0">
-            {/* Removed dark:text-white */}
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
               Resources
             </h3>
@@ -67,7 +63,6 @@ export default function Footer() {
               <li>
                 <Link
                   href="/about"
-                  // Removed dark:text-gray-400 and dark:hover:text-white
                   className="text-base text-gray-500 hover:text-gray-900"
                 >
                   About
@@ -76,7 +71,6 @@ export default function Footer() {
               <li>
                 <Link
                   href="/contact"
-                  // Removed dark:text-gray-400 and dark:hover:text-white
                   className="text-base text-gray-500 hover:text-gray-900"
                 >
                   Contact
@@ -86,7 +80,6 @@ export default function Footer() {
           </div>
 
           <div className="mt-10 md:mt-0">
-            {/* Removed dark:text-white */}
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
               Legal
             </h3>
@@ -94,7 +87,6 @@ export default function Footer() {
               <li>
                 <Link
                   href="/privacy"
-                  // Removed dark:text-gray-400 and dark:hover:text-white
                   className="text-base text-gray-500 hover:text-gray-900"
                 >
                   Privacy Policy
@@ -103,7 +95,6 @@ export default function Footer() {
               <li>
                 <Link
                   href="/licensing"
-                  // Removed dark:text-gray-400 and dark:hover:text-white
                   className="text-base text-gray-500 hover:text-gray-900"
                 >
                   Licensing
@@ -112,10 +103,7 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-
-        {/* Removed dark:border-gray-700 */}
         <div className="mt-12 pt-8 border-t border-gray-200 sm:flex sm:items-center sm:justify-between">
-          {/* Removed dark:text-gray-400 */}
           <span className="text-sm text-gray-500 sm:text-center">
             © {new Date().getFullYear()}{' '}
             <a
@@ -131,7 +119,6 @@ export default function Footer() {
               href="https://www.facebook.com/PhotoBytes999"
               target="_blank"
               rel="noopener noreferrer"
-              // Removed dark:hover:text-white
               className="text-gray-400 hover:text-gray-500"
             >
               <span className="sr-only">Facebook</span>
@@ -139,7 +126,6 @@ export default function Footer() {
             </a>
             <a
               href="#"
-              // Removed dark:hover:text-white
               className="text-gray-400 hover:text-gray-500"
             >
               <span className="sr-only">Twitter</span>
