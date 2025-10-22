@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 export default function Dashboard() {
   return (
     <div className="min-h-screen min-w-screen bg-gray-50 flex flex-col items-center justify-center -mt-16">
