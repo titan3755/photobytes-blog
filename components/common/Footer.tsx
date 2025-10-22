@@ -1,5 +1,7 @@
-import Link from 'next/link';
-import Image from 'next/image';
+import React from 'react'; // Import React for JSX
+
+// Using <a> tags instead of <Link>
+// Using <img> tags instead of <Image>
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -29,83 +31,98 @@ const TwitterIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-100 dark:bg-gray-900">
+    // Removed dark:bg-gray-900
+    <footer className="bg-gray-100">
       <div className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="md:grid md:grid-cols-4 md:gap-8">
           <div className="space-y-4">
-            <Link
+            <a
               href="/"
               className="flex items-center space-x-3 rtl:space-x-reverse"
             >
-              <Image
+              {/* Replaced Image with <img> */}
+              <img
                 src="/final.svg"
                 alt="PhotoBytes Studios logo"
                 width={32}
                 height={32}
                 className="h-8 w-8"
-                unoptimized={true}
               />
-              <span className="self-center text-2xl font-semibold whitespace-nowrap text-gray-900 dark:text-white">
+              {/* Removed dark:text-white */}
+              <span className="self-center text-2xl font-semibold whitespace-nowrap text-gray-900">
                 PhotoBytes Blog
               </span>
-            </Link>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
+            </a>
+            {/* Removed dark:text-gray-400 */}
+            <p className="text-gray-500 text-sm">
               The official blog for PhotoBytes Studios, covering tech,
               photography, and development.
             </p>
           </div>
           <div className="hidden md:block"></div>
           <div className="mt-10 md:mt-0">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
+            {/* Removed dark:text-white */}
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
               Resources
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
-                <Link
+                {/* Replaced Link with <a> */}
+                <a
                   href="/about"
-                  className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  // Removed dark:text-gray-400 and dark:hover:text-white
+                  className="text-base text-gray-500 hover:text-gray-900"
                 >
                   About
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                {/* Replaced Link with <a> */}
+                <a
                   href="/contact"
-                  className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  // Removed dark:text-gray-400 and dark:hover:text-white
+                  className="text-base text-gray-500 hover:text-gray-900"
                 >
                   Contact
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
 
           <div className="mt-10 md:mt-0">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
+            {/* Removed dark:text-white */}
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
               Legal
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
-                <Link
+                {/* Replaced Link with <a> */}
+                <a
                   href="/privacy"
-                  className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  // Removed dark:text-gray-400 and dark:hover:text-white
+                  className="text-base text-gray-500 hover:text-gray-900"
                 >
                   Privacy Policy
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                {/* Replaced Link with <a> */}
+                <a
                   href="/licensing"
-                  className="text-base text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  // Removed dark:text-gray-400 and dark:hover:text-white
+                  className="text-base text-gray-500 hover:text-gray-900"
                 >
                   Licensing
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 sm:flex sm:items-center sm:justify-between">
-          <span className="text-sm text-gray-500 sm:text-center dark:text-gray-400">
+        {/* Removed dark:border-gray-700 */}
+        <div className="mt-12 pt-8 border-t border-gray-200 sm:flex sm:items-center sm:justify-between">
+          {/* Removed dark:text-gray-400 */}
+          <span className="text-sm text-gray-500 sm:text-center">
             © {new Date().getFullYear()}{' '}
             <a
               href="https://photobytes-reworked.vercel.app/"
@@ -120,14 +137,16 @@ export default function Footer() {
               href="https://www.facebook.com/PhotoBytes999"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-400 hover:text-gray-500 dark:hover:text-white"
+              // Removed dark:hover:text-white
+              className="text-gray-400 hover:text-gray-500"
             >
               <span className="sr-only">Facebook</span>
               <FacebookIcon className="h-6 w-6" />
             </a>
             <a
               href="#"
-              className="text-gray-400 hover:text-gray-500 dark:hover:text-white"
+              // Removed dark:hover:text-white
+              className="text-gray-400 hover:text-gray-500"
             >
               <span className="sr-only">Twitter</span>
               <TwitterIcon className="h-6 w-6" />
