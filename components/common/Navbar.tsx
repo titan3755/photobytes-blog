@@ -1,8 +1,9 @@
-'use client'
+'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { useSession, signOut } from 'next-auth/react'; // Import next-auth hooks
 
 function classNames(...classes: string[]): string {
   return classes.filter(Boolean).join(' ');
@@ -10,6 +11,8 @@ function classNames(...classes: string[]): string {
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: session, status } = useSession(); // Get session data and status
+  const isAuthenticated = status === 'authenticated'; // Check if user is logged in
 
   return (
     <>
@@ -17,7 +20,10 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center border-b-2 border-gray-100 py-6 md:justify-start md:space-x-10">
             <div className="flex justify-start lg:w-0 lg:flex-1">
-              <Link href="/" className="min-h-[62px] text-center sm:h-[60px] p-0.5 flex items-center">
+              <Link
+                href="/"
+                className="min-h-[62px] text-center sm:h-[60px] p-0.5 flex items-center"
+              >
                 <Image
                   src="/final.svg"
                   alt="PhotoBytes Blog"
@@ -54,34 +60,66 @@ export default function Navbar() {
               </button>
             </div>
             <nav className="hidden md:flex space-x-10">
-              <Link href="/privacy" className="text-base font-medium text-gray-500 hover:text-gray-900">
+              <Link
+                href="/privacy"
+                className="text-base font-medium text-gray-500 hover:text-gray-900"
+              >
                 Privacy
               </Link>
-              <Link href="/about" className="text-base font-medium text-gray-500 hover:text-gray-900">
+              <Link
+                href="/about"
+                className="text-base font-medium text-gray-500 hover:text-gray-900"
+              >
                 About Us
               </Link>
-              <Link href="/contact" className="text-base font-medium text-gray-500 hover:text-gray-900">
+              <Link
+                href="/contact"
+                className="text-base font-medium text-gray-500 hover:text-gray-900"
+              >
                 Contact
               </Link>
-              <a className="text-base font-medium text-gray-500 hover:text-gray-900" target="_blank" href="https://www.facebook.com/PhotoBytes999" rel="noopener noreferrer">
+              <a
+                className="text-base font-medium text-gray-500 hover:text-gray-900"
+                target="_blank"
+                href="https://www.facebook.com/PhotoBytes999"
+                rel="noopener noreferrer"
+              >
                 Order
               </a>
             </nav>
             <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
-              <Link href="/login">
-              <button
-                className="whitespace-nowrap text-base font-medium text-gray-500 hover:text-gray-900"
-              >
-                Login
-              </button>
-              </Link>
-              <Link href="/register">
-              <button
-                className="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
-              >
-                Register
-              </button>
-              </Link>
+              {/* --- START: Auth Conditional --- */}
+              {isAuthenticated ? (
+                // --- Logged IN UI (Desktop) ---
+                <>
+                  <Link href="/dashboard">
+                    <button className="whitespace-nowrap text-base font-medium text-gray-500 hover:text-gray-900">
+                      Dashboard
+                    </button>
+                  </Link>
+                  <button
+                    onClick={() => signOut()}
+                    className="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                // --- Logged OUT UI (Desktop) ---
+                <>
+                  <Link href="/login">
+                    <button className="whitespace-nowrap text-base font-medium text-gray-500 hover:text-gray-900">
+                      Login
+                    </button>
+                  </Link>
+                  <Link href="/register">
+                    <button className="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700">
+                      Register
+                    </button>
+                  </Link>
+                </>
+              )}
+              {/* --- END: Auth Conditional --- */}
             </div>
           </div>
         </div>
@@ -104,7 +142,9 @@ export default function Navbar() {
                     width={62}
                     height={62}
                   />
-                  <span className="ml-5 text-2xl font-bold text-gray-900">PhotoBytes Blog</span>
+                  <span className="ml-5 text-2xl font-bold text-gray-900">
+                    PhotoBytes Blog
+                  </span>
                 </div>
                 <div className="-mr-2">
                   <button
@@ -134,43 +174,84 @@ export default function Navbar() {
             </div>
             <div className="py-6 px-5 space-y-6">
               <div className="grid grid-cols-2 gap-y-4 gap-x-8">
-                <Link href="/" className="text-base font-medium text-gray-900 hover:text-gray-700">
+                <Link
+                  href="/"
+                  className="text-base font-medium text-gray-900 hover:text-gray-700"
+                >
                   Home
                 </Link>
-                <Link href="/contact" className="text-base font-medium text-gray-900 hover:text-gray-700">
+                <Link
+                  href="/contact"
+                  className="text-base font-medium text-gray-900 hover:text-gray-700"
+                >
                   Contact
                 </Link>
-                <a className="text-base font-medium text-gray-900 hover:text-gray-700" target="_blank" href="https://www.facebook.com/PhotoBytes999" rel="noopener noreferrer">
+                <a
+                  className="text-base font-medium text-gray-900 hover:text-gray-700"
+                  target="_blank"
+                  href="https://www.facebook.com/PhotoBytes999"
+                  rel="noopener noreferrer"
+                >
                   Order
                 </a>
-                <a href="https://www.facebook.com/PhotoBytes999" className="text-base font-medium text-gray-900 hover:text-gray-700">
+                <a
+                  href="https://www.facebook.com/PhotoBytes999"
+                  className="text-base font-medium text-gray-900 hover:text-gray-700"
+                >
                   Help Center
                 </a>
-                <a href="https://www.facebook.com/PhotoBytes999" className="text-base font-medium text-gray-900 hover:text-gray-700">
+                <a
+                  href="https://www.facebook.com/PhotoBytes999"
+                  className="text-base font-medium text-gray-900 hover:text-gray-700"
+                >
                   Facebook Page
                 </a>
-                <a href="/privacy" className="text-base font-medium text-gray-900 hover:text-gray-700">
+                <a
+                  href="/privacy"
+                  className="text-base font-medium text-gray-900 hover:text-gray-700"
+                >
                   Security
                 </a>
               </div>
               <div>
-                <Link href="/register">
-                  <button
-                    className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
-                  >
-                    Register
-                  </button>
-                </Link>
-                <p className="mt-6 text-center text-base font-medium text-gray-500">
-                  Existing customer?{' '}
-                <Link href="/login">
-                  <button
-                    className="text-blue-600 hover:text-blue-500"
-                  >
-                    Login
-                  </button>
-                </Link>
-                </p>
+                {/* --- START: Auth Conditional (Mobile) --- */}
+                {isAuthenticated ? (
+                  // --- Logged IN UI (Mobile) ---
+                  <>
+                    <Link href="/dashboard">
+                      <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        Dashboard
+                      </button>
+                    </Link>
+                    <p className="mt-6 text-center text-base font-medium text-gray-500">
+                      Welcome back!{' '}
+                      <button
+                        onClick={() => signOut()}
+                        className="text-blue-600 hover:text-blue-500 font-medium"
+                      >
+                        Logout
+                      </button>
+                    </p>
+                  </>
+                ) : (
+                  // --- Logged OUT UI (Mobile) ---
+                  <>
+                    <Link href="/register">
+                      <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        Register
+                      </button>
+                    </Link>
+                    <p className="mt-6 text-center text-base font-medium text-gray-500">
+                      Existing customer?{' '}
+                      <Link href="/login">
+                        <button className="text-blue-600 hover:text-blue-500">
+                          Login
+                        </button>
+                      </Link>
+                    </p>
+                  </>
+                )}
+                {/* --- END: Auth Conditional (Mobile) --- */}
               </div>
             </div>
           </div>
