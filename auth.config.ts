@@ -21,16 +21,14 @@ export const authConfig = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        // On sign-in, 'user' object is available
         // @ts-ignore
         token.role = user.role;
       }
       return token;
     },
-    // This callback adds the role to the session object
     async session({ session, token }) {
       if (session.user && token.role) {
-        session.user.role = token.role as Role; // Add role to session
+        session.user.role = token.role as Role;
       }
       return session;
     },
