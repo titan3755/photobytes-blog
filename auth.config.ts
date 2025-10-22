@@ -2,6 +2,7 @@ import type { NextAuthConfig } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
 import { NextResponse } from 'next/server';
+import type { Role } from '@prisma/client';
 export const authConfig = {
   providers: [
     GoogleProvider({
@@ -18,6 +19,21 @@ export const authConfig = {
     signIn: '/login',
   },
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        // On sign-in, 'user' object is available
+        // @ts-ignore
+        token.role = user.role;
+      }
+      return token;
+    },
+    // This callback adds the role to the session object
+    async session({ session, token }) {
+      if (session.user && token.role) {
+        session.user.role = token.role as Role; // Add role to session
+      }
+      return session;
+    },
     authorized({ auth, request }) {
       const { nextUrl } = request;
       const pathname = nextUrl.pathname;
