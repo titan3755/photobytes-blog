@@ -1,7 +1,5 @@
-import React from 'react'; // Import React for JSX
-
-// Using <a> tags instead of <Link>
-// Using <img> tags instead of <Image>
+import Link from 'next/link';
+import Image from 'next/image';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -36,23 +34,23 @@ export default function Footer() {
       <div className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="md:grid md:grid-cols-4 md:gap-8">
           <div className="space-y-4">
-            <a
+            <Link
               href="/"
               className="flex items-center space-x-3 rtl:space-x-reverse"
             >
-              {/* Replaced Image with <img> */}
-              <img
+              <Image
                 src="/final.svg"
                 alt="PhotoBytes Studios logo"
                 width={32}
                 height={32}
                 className="h-8 w-8"
+                unoptimized={true}
               />
               {/* Removed dark:text-white */}
               <span className="self-center text-2xl font-semibold whitespace-nowrap text-gray-900">
                 PhotoBytes Blog
               </span>
-            </a>
+            </Link>
             {/* Removed dark:text-gray-400 */}
             <p className="text-gray-500 text-sm">
               The official blog for PhotoBytes Studios, covering tech,
@@ -67,24 +65,22 @@ export default function Footer() {
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
-                {/* Replaced Link with <a> */}
-                <a
+                <Link
                   href="/about"
                   // Removed dark:text-gray-400 and dark:hover:text-white
                   className="text-base text-gray-500 hover:text-gray-900"
                 >
                   About
-                </a>
+                </Link>
               </li>
               <li>
-                {/* Replaced Link with <a> */}
-                <a
+                <Link
                   href="/contact"
                   // Removed dark:text-gray-400 and dark:hover:text-white
                   className="text-base text-gray-500 hover:text-gray-900"
                 >
                   Contact
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -96,24 +92,22 @@ export default function Footer() {
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
-                {/* Replaced Link with <a> */}
-                <a
+                <Link
                   href="/privacy"
                   // Removed dark:text-gray-400 and dark:hover:text-white
                   className="text-base text-gray-500 hover:text-gray-900"
                 >
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
-                {/* Replaced Link with <a> */}
-                <a
+                <Link
                   href="/licensing"
                   // Removed dark:text-gray-400 and dark:hover:text-white
                   className="text-base text-gray-500 hover:text-gray-900"
                 >
                   Licensing
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
