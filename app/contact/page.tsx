@@ -11,14 +11,7 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('Submitting...');
-
-    // ---
-    // NOTE: This is where you would send the data to your backend API route
-    // For now, we'll just log it and show a success message.
-    // ---
     console.log({ name, email, message });
-
-    // Simulate an API call
     setTimeout(() => {
       setStatus('Message sent successfully!');
       setName('');
@@ -28,10 +21,8 @@ export default function ContactPage() {
   };
 
   return (
-    // Removed dark mode classes from container
     <div className="py-12 px-4 sm:px-6 lg:px-8 min-h-screen min-w-screen bg-gray-50 flex flex-col items-center justify-center ">
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
         <div className="text-center">
           <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
             Contact Us
@@ -41,8 +32,6 @@ export default function ContactPage() {
             you.
           </p>
         </div>
-
-        {/* Contact Form */}
         <form onSubmit={handleSubmit} className="mt-12 space-y-6">
           <div>
             <label
@@ -60,7 +49,6 @@ export default function ContactPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                // Removed dark mode classes
                 className="block w-full px-4 py-3 rounded-md shadow-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
               />
             </div>
@@ -81,8 +69,7 @@ export default function ContactPage() {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)} // Completed this line
-                // Removed dark mode classes
+                onChange={(e) => setEmail(e.target.value)}
                 className="block w-full px-4 py-3 rounded-md shadow-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
               />
             </div>
@@ -103,7 +90,6 @@ export default function ContactPage() {
                 required
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                // Removed dark mode classes
                 className="block w-full px-4 py-3 rounded-md shadow-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
               />
             </div>
