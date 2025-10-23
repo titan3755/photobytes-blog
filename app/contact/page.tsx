@@ -1,13 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-// import type { Metadata } from 'next'; // Removed this
-
-// Removed the metadata export
-// export const metadata: Metadata = {
-//   title: 'Contact Us | PhotoBytes Blog',
-//   description: 'Get in touch with PhotoBytes Studios.',
-// };
 
 export default function ContactPage() {
   const [name, setName] = useState('');
@@ -35,14 +28,15 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="py-12 px-4 sm:px-6 lg:px-8">
+    // Removed dark mode classes from container
+    <div className="py-12 px-4 sm:px-6 lg:px-8 min-h-screen min-w-screen bg-gray-50 flex flex-col items-center justify-center ">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl">
+          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
             Contact Us
           </h1>
-          <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
+          <p className="mt-4 text-lg text-gray-500">
             Have a question, feedback, or a project idea? We'd love to hear from
             you.
           </p>
@@ -53,7 +47,7 @@ export default function ContactPage() {
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-gray-700"
             >
               Your Name
             </label>
@@ -66,7 +60,8 @@ export default function ContactPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="block w-full px-4 py-3 rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:border-blue-500 focus:ring-blue-500 text-gray-900 dark:text-white"
+                // Removed dark mode classes
+                className="block w-full px-4 py-3 rounded-md shadow-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
               />
             </div>
           </div>
@@ -74,7 +69,7 @@ export default function ContactPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-gray-700"
             >
               Your Email
             </label>
@@ -86,8 +81,9 @@ export default function ContactPage() {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full px-4 py-3 rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:border-blue-500 focus:ring-blue-500 text-gray-900 dark:text-white"
+                onChange={(e) => setEmail(e.target.value)} // Completed this line
+                // Removed dark mode classes
+                className="block w-full px-4 py-3 rounded-md shadow-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
               />
             </div>
           </div>
@@ -95,7 +91,7 @@ export default function ContactPage() {
           <div>
             <label
               htmlFor="message"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-gray-700"
             >
               Message
             </label>
@@ -107,7 +103,8 @@ export default function ContactPage() {
                 required
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="block w-full px-4 py-3 rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:border-blue-500 focus:ring-blue-500 text-gray-900 dark:text-white"
+                // Removed dark mode classes
+                className="block w-full px-4 py-3 rounded-md shadow-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
               />
             </div>
           </div>
@@ -122,7 +119,7 @@ export default function ContactPage() {
           </div>
 
           {status && (
-            <p className="text-center text-sm text-gray-600 dark:text-gray-300">
+            <p className="text-center text-sm text-gray-600">
               {status}
             </p>
           )}
