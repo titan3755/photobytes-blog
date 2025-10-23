@@ -100,9 +100,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // 3. Protect /admin routes
       if (pathname.startsWith('/admin')) {
         if (isLoggedIn) {
-          return isAdmin; // Only admin can access
+          if (isAdmin) {
+            return true; // Is admin, allow access
+          } else {
+            // Is logged in, but NOT admin -> Redirect to Forbidden
+            return NextResponse.redirect(new URL('/forbidden', nextUrl));
+          }
         }
-        return false; // Not logged in
+        return false; // Not logged in -> Redirect to /login
       }
 
       // 4. Protect /dashboard/articles

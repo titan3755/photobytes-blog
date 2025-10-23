@@ -1,7 +1,6 @@
 import type { NextAuthConfig } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
-// Removed: NextResponse, Role
 
 export const authConfig = {
   providers: [
@@ -20,5 +19,4 @@ export const authConfig = {
   pages: {
     signIn: '/login',
   },
-  // The ENTIRE callbacks object is moved to auth.ts
 } satisfies NextAuthConfig;
