@@ -87,11 +87,11 @@ export default async function Dashboard() {
         {/* This entire section will only show for ADMIN or BLOGGER */}
         {canPostArticles ? (
           <div className="bg-white p-6 rounded-lg shadow-lg">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col-reverse justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">Your Articles</h2>
               <Link
                 href="/dashboard/articles/new"
-                className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700"
+                className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg mb-6 hover:bg-green-700"
               >
                 Create New Article
               </Link>
