@@ -1,0 +1,89 @@
+import type { Metadata } from 'next';
+import Image from 'next/image';
+import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'About Us | PhotoBytes Blog',
+  description: 'Learn more about the team and mission behind PhotoBytes Blog.',
+};
+
+export default function AboutPage() {
+  return (
+    <div className="bg-white py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center">
+          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
+            About PhotoBytes
+          </h1>
+          <p className="mt-4 text-lg text-gray-500">
+            Technology, photography, and development, all in one byte.
+          </p>
+        </div>
+        <div className="mt-12 text-lg text-gray-700 space-y-6">
+          <p>
+            Welcome to PhotoBytes Blog, the official blog for{' '}
+            <a
+              href="https://photobytes-reworked.vercel.app/"
+              className="text-blue-600 hover:underline font-medium"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              PhotoBytes Studios
+            </a>
+            . We are a passionate team of creators, developers, and photography
+            enthusiasts dedicated to exploring the intersection of technology and
+            art.
+          </p>
+          <p>
+            Our mission is to provide high-quality tutorials, insightful
+            articles, and inspiring content for everyone, from beginners just
+            starting with their first camera to seasoned developers looking for
+            the latest in web technology.
+          </p>
+          <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center my-8">
+            <span className="text-gray-500">
+              
+            </span>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 pt-4">Our Team</h2>
+          <p>
+            PhotoBytes is run by a small, dedicated team. We believe in the power
+            of sharing knowledge and building a community. While we may be small,
+            our ambitions are large, and we're excited to grow with you.
+          </p>
+          <div className="flex items-center space-x-4">
+            <div className="flex-shrink-0">
+              <Image
+                className="h-16 w-16 rounded-full"
+                src="/final.svg"
+                alt="Team member"
+                width={64}
+                height={64}
+              />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900">
+                Jane Doe
+              </h3>
+              <p className="text-gray-500">Founder & Lead Developer</p>
+            </div>
+          </div>
+
+          <h2 className="text-3xl font-bold text-gray-900 pt-4">Join Us</h2>
+          <p>
+            We're always looking for new perspectives. If you're interested in
+            writing for us, or just want to share your feedback, don't hesitate
+            to{' '}
+            <Link
+              href="/contact"
+              className="text-blue-600 hover:underline font-medium"
+            >
+              get in touch
+            </Link>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
