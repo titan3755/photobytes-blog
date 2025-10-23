@@ -45,15 +45,13 @@ export default function AboutPage() {
           </p>
 
           {/* Image Placeholder */}
-          <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center my-8">
-            <span className="text-gray-500">
-              <Image
-                src="https://images.pexels.com/photos/1714208/pexels-photo-1714208.jpeg" // Placeholder image path
-                alt="About PhotoBytes"
-                width={400}
-                height={200}
-              />
-            </span>
+          <div className="relative w-full h-64 rounded-lg overflow-hidden my-8">
+            <Image
+              src="https://images.pexels.com/photos/1714208/pexels-photo-1714208.jpeg" // Your Pexels image URL
+              alt="PhotoBytes team"
+              fill
+              className="object-cover"
+            />
           </div>
 
           <h2 className="text-3xl font-bold text-gray-900 pt-4">Our Team</h2>
