@@ -65,7 +65,7 @@ export default async function Dashboard() {
   const canPostArticles = userRole === 'ADMIN' || userRole === 'BLOGGER';
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen w-full bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 min-w-screen flex flex-col items-center justify-center">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           Welcome, {session.user.username || session.user.name}!
