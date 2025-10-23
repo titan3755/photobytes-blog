@@ -44,8 +44,13 @@ export default async function Dashboard() {
   // 2. Get the user's session
   const session = await auth();
 
-  // The middleware should protect this, but we double-check
+  // Your middleware is already protecting this page,
+  // so we know the user is logged in.
+  // This check is safe because our callbacks now provide the id.
   if (!session?.user?.id) {
+    // This should theoretically not be reachable,
+    // but it's good practice.
+    console.error('Session not found, redirecting to login.');
     redirect('/api/auth/signin');
   }
 
@@ -55,6 +60,10 @@ export default async function Dashboard() {
     orderBy: { updatedAt: 'desc' },
   });
 
+  // Check user role for conditional UI
+  const userRole = session.user.role;
+  const canPostArticles = userRole === 'ADMIN' || userRole === 'BLOGGER';
+
   return (
     <div className="min-h-screen w-full bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -63,7 +72,7 @@ export default async function Dashboard() {
         </h1>
 
         {/* 4. Conditional Admin Link */}
-        {session.user.role === 'ADMIN' && (
+        {userRole === 'ADMIN' && (
           <div className="mb-6 p-4 bg-blue-100 border border-blue-300 rounded-lg">
             <Link
               href="/admin"
@@ -75,29 +84,44 @@ export default async function Dashboard() {
         )}
 
         {/* 5. Article Management Section */}
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Your Articles</h2>
-            <Link
-              href="/dashboard/articles/new"
-              className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700"
-            >
-              Create New Article
-            </Link>
-          </div>
+        {/* This entire section will only show for ADMIN or BLOGGER */}
+        {canPostArticles ? (
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Your Articles</h2>
+              <Link
+                href="/dashboard/articles/new"
+                className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700"
+              >
+                Create New Article
+              </Link>
+            </div>
 
-          <ul className="space-y-4">
-            {userArticles.length > 0 ? (
-              userArticles.map((article) => (
-                <UserArticleRow key={article.id} article={article} />
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-4">
-                You haven't written any articles yet.
-              </p>
-            )}
-          </ul>
-        </div>
+            <ul className="space-y-4">
+              {userArticles.length > 0 ? (
+                userArticles.map((article) => (
+                  <UserArticleRow key={article.id} article={article} />
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4">
+                  You haven't written any articles yet.
+                </p>
+              )}
+            </ul>
+          </div>
+        ) : (
+          // This will show for a normal 'USER'
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Your Dashboard
+            </h2>
+            <p className="text-gray-600">
+              Welcome to your personal dashboard. You can manage your profile,
+              view your comments, and more.
+            </p>
+            {/* You can add links to /profile or other user-specific pages here */}
+          </div>
+        )}
       </div>
     </div>
   );
