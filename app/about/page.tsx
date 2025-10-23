@@ -9,8 +9,9 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="bg-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="bg-white py-12 px-4 sm:px-6 lg:px-8 min-h-screen min-w-screen flex flex-col items-center justify-center ">
       <div className="max-w-3xl mx-auto">
+        {/* Header */}
         <div className="text-center">
           <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
             About PhotoBytes
@@ -19,6 +20,8 @@ export default function AboutPage() {
             Technology, photography, and development, all in one byte.
           </p>
         </div>
+
+        {/* Main Content Section */}
         <div className="mt-12 text-lg text-gray-700 space-y-6">
           <p>
             Welcome to PhotoBytes Blog, the official blog for{' '}
@@ -40,34 +43,62 @@ export default function AboutPage() {
             starting with their first camera to seasoned developers looking for
             the latest in web technology.
           </p>
+
+          {/* Image Placeholder */}
           <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center my-8">
             <span className="text-gray-500">
-              
+              {/* You can add text or an image component here */}
             </span>
           </div>
+
           <h2 className="text-3xl font-bold text-gray-900 pt-4">Our Team</h2>
           <p>
             PhotoBytes is run by a small, dedicated team. We believe in the power
             of sharing knowledge and building a community. While we may be small,
             our ambitions are large, and we're excited to grow with you.
           </p>
-          <div className="flex items-center space-x-4">
-            <div className="flex-shrink-0">
-              <Image
-                className="h-16 w-16 rounded-full"
-                src="/final.svg"
-                alt="Team member"
-                width={64}
-                height={64}
-              />
+
+          {/* Team Members Section */}
+          <div className="space-y-8">
+            {/* Mahmud Al Muhaimin */}
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0">
+                <Image
+                  className="h-16 w-16 rounded-full"
+                  src="/final.svg" // Placeholder, use an actual team member photo
+                  alt="Team member"
+                  width={64}
+                  height={64}
+                />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Mahmud Al Muhaimin
+                </h3>
+                <p className="text-gray-500">Co-founder and Lead Developer</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900">
-                Jane Doe
-              </h3>
-              <p className="text-gray-500">Founder & Lead Developer</p>
+
+            {/* Adib Azwad */}
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0">
+                <Image
+                  className="h-16 w-16 rounded-full"
+                  src="/final.svg" // Placeholder, use an actual team member photo
+                  alt="Team member"
+                  width={64}
+                  height={64}
+                />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Adib Azwad
+                </h3>
+                <p className="text-gray-500">Co-founder and Lead Designer</p>
+              </div>
             </div>
           </div>
+          {/* End Team Members Section */}
 
           <h2 className="text-3xl font-bold text-gray-900 pt-4">Join Us</h2>
           <p>
