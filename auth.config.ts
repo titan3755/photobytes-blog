@@ -39,6 +39,7 @@ export const authConfig = {
       const pathname = nextUrl.pathname;
       const isLoggedIn = !!auth?.user;
       const isAdmin = auth?.user?.role === 'ADMIN';
+      const isBlogger = auth?.user?.role === 'BLOGGER';
       if (pathname.startsWith('/admin')) {
         if (isLoggedIn) {
           if (isAdmin) {
