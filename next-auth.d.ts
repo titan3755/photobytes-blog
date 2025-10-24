@@ -8,13 +8,14 @@ declare module 'next-auth' {
       role: Role;
       username: string | null;
       id: string;
-      // name, email, image are part of DefaultSession
-    } & DefaultSession['user'];
+      createdAt?: Date | string | null; // <-- Add createdAt
+    } & DefaultSession['user']; // Includes name, email, image
   }
 
   interface User {
     role: Role;
     username: string | null;
+    createdAt?: Date | string | null; // <-- Add createdAt
   }
 }
 
@@ -23,8 +24,8 @@ declare module 'next-auth/jwt' {
     role: Role;
     username: string | null;
     id: string;
-    name?: string | null; // Make sure name is here
+    name?: string | null;
     email?: string | null;
-    // picture corresponds to image
+    createdAt?: Date | string | null; // <-- Add createdAt
   }
 }

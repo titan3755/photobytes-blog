@@ -5,7 +5,7 @@ import { authConfig } from './auth.config';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcrypt';
 import type { Role } from '@prisma/client';
-import { NextResponse } from 'next/server'; // Import NextResponse here
+import { NextResponse } from 'next/server';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -13,16 +13,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     ...authConfig.providers, // Google and Facebook
     CredentialsProvider({
-      // ... (your existing CredentialsProvider config)
+      // ... (CredentialsProvider config remains the same)
       async authorize(credentials) {
-        // ... (your existing authorize logic)
         const { email, username, password } = credentials;
-
-        // --- FIX: Add type guard ---
-        if (typeof password !== 'string') {
-          return null; // or throw an error
-        }
-        // --- END FIX ---
+        if (typeof password !== 'string') return null;
 
         const user = await prisma.user.findFirst({
           where: {
@@ -32,16 +26,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             ].filter(Boolean) as any,
           },
         });
-        if (!user || typeof user.password !== 'string') {
-          return null;
-        }
-        const valid = await bcrypt.compare(password, user.password); // Error is now fixed
+        if (!user || typeof user.password !== 'string') return null;
+
+        const valid = await bcrypt.compare(password, user.password);
         if (!valid) return null;
-        return user; // Return the full user object
+        return user; // Return the full user object (including createdAt)
       },
     }),
   ],
-  // --- All callbacks are now in this file ---
   callbacks: {
     async jwt({ token, user }) {
       if (user?.id) {
@@ -51,18 +43,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role = user.role;
         // @ts-ignore
         token.username = user.username;
-        token.name = user.name; // <-- Ensure name is added
-        token.email = user.email; // <-- Ensure email is added
+        token.name = user.name;
+        token.email = user.email;
+        // @ts-ignore - Add createdAt
+        token.createdAt = user.createdAt;
       } else if (token.id) {
-        // Subsequent requests - refresh role (and potentially name/email)
+        // Subsequent requests - refresh data
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
         });
         if (dbUser) {
           token.role = dbUser.role;
           token.username = dbUser.username;
-          token.name = dbUser.name; // <-- Refresh name
-          token.email = dbUser.email; // <-- Refresh email
+          token.name = dbUser.name;
+          token.email = dbUser.email;
+          token.createdAt = dbUser.createdAt; // <-- Refresh createdAt
         }
       }
       return token;
@@ -73,17 +68,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (token.id) session.user.id = token.id as string;
         if (token.role) session.user.role = token.role as Role;
         if (token.username) session.user.username = token.username as string;
-        if (token.name) session.user.name = token.name; // <-- Ensure name is added
-        if (token.email) session.user.email = token.email; // <-- Ensure email is added
+        if (token.name) session.user.name = token.name;
+        if (token.email) session.user.email = token.email;
+        if (token.createdAt) session.user.createdAt = token.createdAt; // <-- Add createdAt
       }
       return session;
     },
-    // Authorized callback remains the same as your correct version
+    // Authorized callback remains the same
     authorized({ auth, request }) {
       const { nextUrl } = request;
       const pathname = nextUrl.pathname;
-      const isLoggedIn = !!auth?.user;
-      const userRole = auth?.user?.role;
+      const isLoggedIn = !!auth?.user; // Check user object in session
+      const userRole = auth?.user?.role; // Get role from session user
       const isAdmin = userRole === 'ADMIN';
       const isBlogger = userRole === 'BLOGGER';
 
