@@ -1,9 +1,18 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { EditorContent, Editor } from '@tiptap/react'; // Removed useEditor, we create instance manually
+import { EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
+// --- START: Import New Extensions ---
+import Underline from '@tiptap/extension-underline';
+import Link from '@tiptap/extension-link';
+import TextAlign from '@tiptap/extension-text-align';
+import Highlight from '@tiptap/extension-highlight';
+import Subscript from '@tiptap/extension-subscript';
+import Superscript from '@tiptap/extension-superscript';
+// HorizontalRule is in StarterKit
+// --- END: Import New Extensions ---
 import Toolbar from './Toolbar';
 
 interface TiptapProps {
@@ -12,12 +21,10 @@ interface TiptapProps {
 }
 
 const TiptapEditor = ({ content, onChange }: TiptapProps) => {
-  // Use state ONLY for triggering re-render once editor is ready
   const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
-  const editorRef = useRef<Editor | null>(null); // Ref to hold the stable instance
-  const isMounted = useRef(false); // Ref to track mount status
+  const editorRef = useRef<Editor | null>(null);
+  const isMounted = useRef(false);
 
-  // Store onChange in a ref to avoid dependency issues
   const onChangeRef = useRef(onChange);
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -25,23 +32,42 @@ const TiptapEditor = ({ content, onChange }: TiptapProps) => {
 
   // --- STRICTLY ONE-TIME Initialization Effect ---
   useEffect(() => {
-    // Prevent running on server or multiple times
     if (typeof window === 'undefined' || isMounted.current || editorRef.current) {
       return;
     }
-
-    isMounted.current = true; // Mark as mounted
+    isMounted.current = true;
 
     const editor = new Editor({
       extensions: [
-        StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+        StarterKit.configure({
+           heading: { levels: [1, 2, 3] },
+           // HorizontalRule is included here
+        }),
         Image.configure({ inline: false }),
+        // --- START: Add New Extensions ---
+        Underline,
+        Link.configure({
+            openOnClick: false, // Don't open link when clicking in editor
+            autolink: true, // Automatically detect links
+            // Add rel="noopener noreferrer nofollow" to links for security/SEO
+            HTMLAttributes: {
+                rel: 'noopener noreferrer nofollow',
+                target: '_blank', // Always open links in new tab
+            },
+        }),
+        TextAlign.configure({
+            types: ['heading', 'paragraph'], // Allow alignment on these node types
+        }),
+        Highlight.configure({ multicolor: true }), // Allow different highlight colors (though toolbar only uses default for now)
+        Subscript,
+        Superscript,
+        // --- END: Add New Extensions ---
       ],
       content: content, // Set initial content ONCE
       editorProps: {
         attributes: {
           class:
-            'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl dark:prose-invert focus:outline-none p-4 min-h-[300px] w-full text-black bg-white',
+            'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none p-4 min-h-[300px] w-full !text-black bg-white',
         },
       },
       onUpdate({ editor }) {
@@ -49,39 +75,19 @@ const TiptapEditor = ({ content, onChange }: TiptapProps) => {
       },
     });
 
-    editorRef.current = editor; // Store in ref
-    setEditorInstance(editor); // Set state to trigger re-render with the editor
+    editorRef.current = editor;
+    setEditorInstance(editor);
 
-    // Cleanup function
     return () => {
       editorRef.current?.destroy();
       editorRef.current = null;
-      isMounted.current = false; // Reset mount status on unmount
-      setEditorInstance(null); // Clear state
+      isMounted.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content]); // Depend only on initial content
+  }, []); // Initialize strictly ONCE
 
-  // --- Separate effect to handle external content updates (for edit page) ---
-  useEffect(() => {
-      // If editor exists, is mounted, and content prop differs from editor content
-      if (editorRef.current && isMounted.current && content !== editorRef.current.getHTML()) {
-           // Check if the change wasn't triggered internally
-           // This prevents resetting content/cursor during typing
-          const { from, to } = editorRef.current.state.selection;
-          // --- FIX: Use options object instead of boolean ---
-          editorRef.current.commands.setContent(content, { emitUpdate: false }); // Update content without firing 'onUpdate'
-          // --- END FIX ---
-          // Attempt to restore selection, might be imperfect
-          editorRef.current.commands.setTextSelection({ from, to });
-
-      }
-  }, [content]); // Depend only on the content prop
-
-
-  // Show placeholder while the editor instance is not ready
   if (!editorInstance) {
-    return (
+     return (
       <div className="flex flex-col border border-gray-300 rounded-lg">
         <div className="flex flex-wrap items-center gap-2 p-2 border-b border-gray-300 bg-gray-100 rounded-t-lg min-h-[44px]"></div>
         <div className="p-4 border-t-0 border border-gray-300 rounded-b-md min-h-[300px] bg-white text-gray-400 italic">
@@ -91,10 +97,11 @@ const TiptapEditor = ({ content, onChange }: TiptapProps) => {
     );
   }
 
-  // Render the editor once the instance is ready
+  // Simplified container, styling inside editor
   return (
-    <div className="flex flex-col border border-gray-300 rounded-lg bg-white">
+    <div className="flex flex-col border border-gray-300 rounded-lg bg-white overflow-hidden">
       <Toolbar editor={editorInstance} />
+      {/* Container for EditorContent */}
       <div className="flex-grow border-t border-gray-300">
         <EditorContent editor={editorInstance} className="h-full" />
       </div>
@@ -103,3 +110,4 @@ const TiptapEditor = ({ content, onChange }: TiptapProps) => {
 };
 
 export default TiptapEditor;
+

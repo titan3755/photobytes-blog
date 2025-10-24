@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import TiptapEditor from '@/components/editor/TiptapEditor'; // Adjust path if needed
 import { useRouter } from 'next/navigation';
-import { createArticle } from './actions'; // Import the Server Action
+import { createArticle } from './actions';
 import Link from 'next/link';
 
 export default function NewArticlePage() {
@@ -13,7 +13,6 @@ export default function NewArticlePage() {
   const [excerpt, setExcerpt] = useState('');
   const [content, setContent] = useState('');
   const [featuredImage, setFeaturedImage] = useState('');
-  // Removed isPublished state, as it's passed directly in handleSubmit
 
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -45,11 +44,9 @@ export default function NewArticlePage() {
       setError('Title, Slug, and Content are required.');
       return;
     }
-    // Optional: Add client-side slug format check if desired
 
     startTransition(async () => {
       try {
-        // Call the Server Action
         const result = await createArticle({
           title: title.trim(),
           slug: slug.trim(),
@@ -68,10 +65,7 @@ export default function NewArticlePage() {
             publish ? 'published' : 'saved as draft'
           } successfully!`
         );
-
-        // Optionally reset form fields or redirect
-        // setTitle(''); setSlug(''); setContent(''); setExcerpt(''); setFeaturedImage('');
-        router.push('/dashboard'); // Redirect to dashboard on success
+        router.push('/dashboard'); // Redirect on success
 
       } catch (err: any) {
         console.error("Article creation failed:", err);
@@ -80,97 +74,42 @@ export default function NewArticlePage() {
     });
   };
 
-  // Apply workaround classes here
   return (
     <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
-      <div className="max-w-4xl w-full mx-auto bg-white p-6 rounded-lg shadow-lg border border-gray-200"> {/* Added w-full */}
+      <div className="max-w-4xl w-full mx-auto bg-white p-6 rounded-lg shadow-lg border border-gray-200">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">
           Create New Article
         </h1>
 
         <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-          {/* Title */}
+          {/* Title, Slug, FeaturedImage, Excerpt fields remain the same */}
+           <div>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700"> Title <span className="text-red-500">*</span> </label>
+            <input type="text" id="title" value={title} onChange={handleTitleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"/>
+          </div>
           <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Title <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="title"
-              value={title}
-              onChange={handleTitleChange}
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"
-            />
+            <label htmlFor="slug" className="block text-sm font-medium text-gray-700"> Slug (URL) <span className="text-red-500">*</span> </label>
+            <input type="text" id="slug" value={slug} onChange={(e) => setSlug(generateSlug(e.target.value))} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black bg-gray-50"/>
+            <p className="mt-1 text-xs text-gray-500"> Auto-generated from title. Use lowercase letters, numbers, and hyphens. Must be unique. </p>
+          </div>
+           <div>
+            <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700"> Featured Image URL (Optional) </label>
+            <input type="url" id="featuredImage" value={featuredImage} onChange={(e) => setFeaturedImage(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black" placeholder="https://example.com/image.jpg"/>
+          </div>
+          <div>
+            <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700"> Excerpt (Optional) </label>
+            <textarea id="excerpt" rows={3} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black" placeholder="A short summary for the article preview..."/>
           </div>
 
-          {/* Slug (Auto-generated but editable) */}
-          <div>
-            <label
-              htmlFor="slug"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Slug (URL) <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="slug"
-              value={slug}
-              onChange={(e) => setSlug(generateSlug(e.target.value))}
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black bg-gray-50"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Auto-generated from title. Use lowercase letters, numbers, and
-              hyphens. Must be unique.
-            </p>
-          </div>
 
-          {/* Featured Image URL (Optional) */}
-          <div>
-            <label
-              htmlFor="featuredImage"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Featured Image URL (Optional)
-            </label>
-            <input
-              type="url"
-              id="featuredImage"
-              value={featuredImage}
-              onChange={(e) => setFeaturedImage(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
-
-          {/* Excerpt (Optional) */}
-          <div>
-            <label
-              htmlFor="excerpt"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Excerpt (Optional)
-            </label>
-            <textarea
-              id="excerpt"
-              rows={3}
-              value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"
-              placeholder="A short summary for the article preview..."
-            />
-          </div>
-
-          {/* Tiptap Editor */}
+          {/* Tiptap Editor - Removed wrapper div */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Content <span className="text-red-500">*</span>
             </label>
+            {/* --- Reverted: Removed wrapper div --- */}
             <TiptapEditor content={content} onChange={handleContentChange} />
+             {/* --- End Revert --- */}
           </div>
 
           {/* Error/Success Messages */}
@@ -179,9 +118,7 @@ export default function NewArticlePage() {
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-4 pt-4">
-             <Link href="/dashboard" className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                 Cancel
-             </Link>
+            <Link href="/dashboard" className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"> Cancel </Link>
             <button
               type="button"
               onClick={() => handleSubmit(false)} // Save as Draft
