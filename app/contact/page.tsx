@@ -28,7 +28,7 @@ export default function ContactPage() {
         throw new Error(errorData.message || 'Something went wrong');
       }
 
-      setStatus('Message sent successfully!');
+      setStatus('Message sent successfully! We will get back to you soon...');
       setName('');
       setEmail('');
       setMessage('');
