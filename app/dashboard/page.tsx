@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { Article, Role } from '@prisma/client'; // Import Role
+import { Article, Role, ApplicationStatus } from '@prisma/client'; // Import ApplicationStatus
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
@@ -26,6 +26,7 @@ function DashboardCard({
 
 // --- Article Row Component (for Bloggers/Admins) ---
 function UserArticleRow({ article }: { article: Article }) {
+  // ... (Component remains the same)
   return (
     <li className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
       <div className="mb-2 sm:mb-0">
@@ -51,9 +52,8 @@ function UserArticleRow({ article }: { article: Article }) {
         >
           Edit
         </Link>
-        {/* Consider adding a confirmation modal for delete later */}
         <Link
-          href={`/dashboard/articles/delete/${article.slug}`} // This should ideally trigger a server action with confirmation
+          href={`/dashboard/articles/delete/${article.slug}`}
           className="px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-md hover:bg-red-600 transition-colors"
         >
           Delete
@@ -63,29 +63,72 @@ function UserArticleRow({ article }: { article: Article }) {
   );
 }
 
+// Helper for status badges in dashboard
+function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
+   let bgColor = 'bg-gray-100';
+   let textColor = 'text-gray-800';
+   let message = 'Your application status: ';
+   if (status === ApplicationStatus.PENDING) {
+     bgColor = 'bg-yellow-100';
+     textColor = 'text-yellow-800';
+     message = 'Your blogger application is currently pending review.';
+   } else if (status === ApplicationStatus.APPROVED) {
+     bgColor = 'bg-green-100';
+     textColor = 'text-green-800';
+      message = 'Congratulations! Your blogger application has been approved.';
+   } else if (status === ApplicationStatus.REJECTED) {
+     bgColor = 'bg-red-100';
+     textColor = 'text-red-800';
+      message = 'Your blogger application was reviewed but not approved at this time.';
+   }
+
+   return (
+      <div className="text-center p-4 rounded-lg border">
+         <p className="text-gray-700 mb-2">{message}</p>
+         <span
+           className={`px-3 py-1 text-sm font-semibold rounded-full ${bgColor} ${textColor}`}
+         >
+           {status}
+         </span>
+         {status === ApplicationStatus.REJECTED && (
+            <p className="mt-2 text-xs text-gray-500">Please contact support if you have questions.</p>
+         )}
+      </div>
+   );
+}
+
+
 export default async function Dashboard() {
   const session = await auth();
 
   if (!session?.user?.id) {
     console.error('Session or user ID not found, redirecting to login.');
-    redirect('/api/auth/signin?error=SessionRequired'); // Add error for debugging
+    redirect('/api/auth/signin?error=SessionRequired');
   }
 
-  // Fetch this user's articles (only needed for bloggers/admins)
+  const userId = session.user.id;
   const userRole = session.user.role;
   const canPostArticles = userRole === Role.ADMIN || userRole === Role.BLOGGER;
 
+  // --- Fetch Data ---
   let userArticles: Article[] = [];
   if (canPostArticles) {
     userArticles = await prisma.article.findMany({
-      where: { authorId: session.user.id },
+      where: { authorId: userId },
       orderBy: { updatedAt: 'desc' },
     });
   }
 
-  // --- Placeholder for Comments ---
-  // In the future, you would fetch comments here:
-  // const userComments = await prisma.comment.findMany({ where: { userId: session.user.id } });
+  // Fetch user's blogger application status (only if they are a USER)
+  let applicationStatus: ApplicationStatus | null = null;
+  if (userRole === Role.USER) {
+    const application = await prisma.bloggerApplication.findUnique({
+      where: { userId: userId },
+      select: { status: true }, // Only select the status
+    });
+    applicationStatus = application?.status ?? null;
+  }
+
   const userCommentsCount = 0; // Placeholder
 
   return (
@@ -98,7 +141,8 @@ export default async function Dashboard() {
 
         {/* Admin Panel Link (Conditional) */}
         {userRole === Role.ADMIN && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-300 rounded-lg shadow-sm text-center">
+          // ... (Admin link section remains the same) ...
+           <div className="mb-6 p-4 bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-300 rounded-lg shadow-sm text-center">
             <Link
               href="/admin"
               className="font-bold text-lg text-indigo-700 hover:text-indigo-900 transition-colors"
@@ -112,7 +156,8 @@ export default async function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* --- Profile Information Card --- */}
           <DashboardCard title="Your Profile" className="md:col-span-1">
-            <div className="space-y-3 text-gray-700">
+             {/* ... (Profile Card content remains the same) ... */}
+              <div className="space-y-3 text-gray-700">
               <p>
                 <span className="font-semibold">Name:</span>{' '}
                 {session.user.name || 'Not Set'}
@@ -139,7 +184,7 @@ export default async function Dashboard() {
                   {userRole}
                 </span>
               </p>
-               {session.user.createdAt && ( // Conditionally render if createdAt exists
+               {session.user.createdAt && (
                  <p>
                   <span className="font-semibold">Joined:</span>{' '}
                   {new Date(session.user.createdAt).toLocaleDateString()}
@@ -148,7 +193,7 @@ export default async function Dashboard() {
             </div>
             <div className="mt-6 text-right">
               <Link
-                href="/profile/edit" // Assuming you'll create an edit profile page
+                href="/profile/edit"
                 className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300 transition-colors"
               >
                 Edit Profile
@@ -158,10 +203,10 @@ export default async function Dashboard() {
 
           {/* --- Comments Placeholder Card --- */}
           <DashboardCard title="Your Comments" className="md:col-span-1">
-            <p className="text-gray-600">
+            {/* ... (Comments Card content remains the same) ... */}
+              <p className="text-gray-600">
               You have made {userCommentsCount} comments.
             </p>
-            {/* Add more details or a link to view comments later */}
             <p className="mt-4 text-sm text-gray-500 italic">
               (Comment management features coming soon!)
             </p>
@@ -174,7 +219,8 @@ export default async function Dashboard() {
             title="Your Articles"
             className="col-span-1 md:col-span-2"
           >
-            <div className="flex justify-end mb-4">
+             {/* ... (Article Management content remains the same) ... */}
+             <div className="flex justify-end mb-4">
               <Link
                 href="/dashboard/articles/new"
                 className="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm"
@@ -196,24 +242,32 @@ export default async function Dashboard() {
           </DashboardCard>
         )}
 
-        {/* --- Apply for Blogger Role Section (Conditional) --- */}
+        {/* --- Apply for Blogger Role Section / Status Display (Conditional) --- */}
         {userRole === Role.USER && (
           <DashboardCard
-            title="Become a Blogger"
+            title="Blogger Application"
             className="col-span-1 md:col-span-2 bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-200"
           >
-            <p className="text-gray-700 mb-6">
-              Interested in sharing your insights on technology, photography, or
-              development? Apply to become a blogger on PhotoBytes!
-            </p>
-            <div className="text-center">
-              <Link
-                href="/apply" // Link to the application page
-                className="inline-flex items-center justify-center px-6 py-3 bg-teal-600 text-white text-lg font-semibold rounded-lg shadow hover:bg-teal-700 transition-transform transform hover:scale-105"
-              >
-                Apply for Blogger Role
-              </Link>
-            </div>
+            {applicationStatus ? (
+              // If application exists, show status
+              <ApplicationStatusDisplay status={applicationStatus} />
+            ) : (
+              // If no application, show the apply button
+              <>
+                <p className="text-gray-700 mb-6">
+                  Interested in sharing your insights on technology, photography, or
+                  development? Apply to become a blogger on PhotoBytes!
+                </p>
+                <div className="text-center">
+                  <Link
+                    href="/apply"
+                    className="inline-flex items-center justify-center px-6 py-3 bg-teal-600 text-white text-lg font-semibold rounded-lg shadow hover:bg-teal-700 transition-transform transform hover:scale-105"
+                  >
+                    Apply for Blogger Role
+                  </Link>
+                </div>
+              </>
+            )}
           </DashboardCard>
         )}
       </div>

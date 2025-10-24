@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
-import { Role } from '@prisma/client';
-import { auth } from '@/auth'; // To ensure only admins can perform actions
+import { Role, ApplicationStatus } from '@prisma/client'; // Add ApplicationStatus
+import { auth } from '@/auth';
 
 // --- User Actions ---
 
@@ -12,10 +12,8 @@ export async function updateUserRole(userId: string, newRole: Role) {
   if (session?.user?.role !== 'ADMIN') {
     throw new Error('Not authorized');
   }
-
-  // Prevent admin from changing their own role via this action
   if (session.user.id === userId && newRole !== 'ADMIN') {
-      throw new Error('Admin cannot change their own role.');
+    throw new Error('Admin cannot change their own role.');
   }
 
   try {
@@ -23,7 +21,7 @@ export async function updateUserRole(userId: string, newRole: Role) {
       where: { id: userId },
       data: { role: newRole },
     });
-    revalidatePath('/admin'); // Refresh the admin page data
+    revalidatePath('/admin');
     return { success: true };
   } catch (error) {
     console.error('Error updating user role:', error);
@@ -36,18 +34,13 @@ export async function deleteUser(userId: string) {
   if (session?.user?.role !== 'ADMIN') {
     throw new Error('Not authorized');
   }
-
-  // Prevent admin from deleting themselves
   if (session.user.id === userId) {
-      throw new Error('Admin cannot delete their own account.');
+    throw new Error('Admin cannot delete their own account.');
   }
 
   try {
-    // Note: onDelete: Cascade in your schema should handle related data (Accounts, Sessions, Articles)
-    await prisma.user.delete({
-      where: { id: userId },
-    });
-    revalidatePath('/admin'); // Refresh the admin page data
+    await prisma.user.delete({ where: { id: userId } });
+    revalidatePath('/admin');
     return { success: true };
   } catch (error) {
     console.error('Error deleting user:', error);
@@ -57,7 +50,10 @@ export async function deleteUser(userId: string) {
 
 // --- Contact Message Actions ---
 
-export async function markContactMessageRead(messageId: string, isRead: boolean) {
+export async function markContactMessageRead(
+  messageId: string,
+  isRead: boolean
+) {
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') {
     throw new Error('Not authorized');
@@ -66,9 +62,9 @@ export async function markContactMessageRead(messageId: string, isRead: boolean)
   try {
     await prisma.contactMessage.update({
       where: { id: messageId },
-      data: { isRead: isRead }, // Set to the desired state (true for read, false for unread)
+      data: { isRead: isRead },
     });
-    revalidatePath('/admin'); // Refresh the admin page data
+    revalidatePath('/admin');
     return { success: true };
   } catch (error) {
     console.error('Error updating contact message status:', error);
@@ -83,13 +79,62 @@ export async function deleteContactMessage(messageId: string) {
   }
 
   try {
-    await prisma.contactMessage.delete({
-      where: { id: messageId },
-    });
-    revalidatePath('/admin'); // Refresh the admin page data
+    await prisma.contactMessage.delete({ where: { id: messageId } });
+    revalidatePath('/admin');
     return { success: true };
   } catch (error) {
     console.error('Error deleting contact message:', error);
     return { success: false, message: 'Failed to delete message.' };
+  }
+}
+
+// --- Blogger Application Actions ---
+
+export async function approveBloggerApplication(
+  applicationId: string,
+  userId: string
+) {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Not authorized');
+  }
+
+  try {
+    // Use a transaction to update both application and user role
+    await prisma.$transaction([
+      prisma.bloggerApplication.update({
+        where: { id: applicationId },
+        data: { status: ApplicationStatus.APPROVED },
+      }),
+      prisma.user.update({
+        where: { id: userId },
+        data: { role: Role.BLOGGER }, // Update user's role
+      }),
+    ]);
+
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error) {
+    console.error('Error approving application:', error);
+    return { success: false, message: 'Failed to approve application.' };
+  }
+}
+
+export async function rejectBloggerApplication(applicationId: string) {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Not authorized');
+  }
+
+  try {
+    await prisma.bloggerApplication.update({
+      where: { id: applicationId },
+      data: { status: ApplicationStatus.REJECTED },
+    });
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error) {
+    console.error('Error rejecting application:', error);
+    return { success: false, message: 'Failed to reject application.' };
   }
 }
