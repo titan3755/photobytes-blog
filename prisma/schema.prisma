@@ -13,6 +13,12 @@ enum Role {
   BLOGGER
 }
 
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id            String   @id @default(cuid())
   name          String?
@@ -26,6 +32,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   articles      Article[]
+  bloggerApplication BloggerApplication?
 }
 
 model Account {
@@ -90,4 +97,16 @@ model ContactMessage {
   createdAt DateTime @default(now())
   isRead    Boolean  @default(false)
   ipAddress String?
+}
+
+model BloggerApplication {
+  id        String   @id @default(cuid())
+  userId    String   @unique // Each user can only apply once
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason    String   // Why they want to be a blogger
+  topics    String   // What topics they want to write about
+  sampleUrl String?  // Optional link to sample work
+  status    ApplicationStatus @default(PENDING) // Track application status
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
