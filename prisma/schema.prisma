@@ -81,3 +81,12 @@ model Category {
   slug      String    @unique
   articles  Article[]
 }
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+  isRead    Boolean  @default(false) // Optional: To track if an admin has seen it
+}
