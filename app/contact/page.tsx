@@ -1,17 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 export default function ContactPage() {
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
-  const [status, setStatus] = useState('');
+  const [formStatus, setFormStatus] = useState('');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (isAuthenticated && session?.user) {
+      setName(session.user.name || '');
+      setEmail(session.user.email || '');
+    }
+    else if (status === 'unauthenticated') {
+        setName('');
+        setEmail('');
+    }
+  }, [session, status, isAuthenticated]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus('Submitting...');
+    setFormStatus('Submitting...');
     setError('');
 
     try {
@@ -28,13 +41,16 @@ export default function ContactPage() {
         throw new Error(errorData.message || 'Something went wrong');
       }
 
-      setStatus('Message sent successfully! We will get back to you soon...');
-      setName('');
-      setEmail('');
+      setFormStatus('Message sent successfully! We will get back to you soon...');
       setMessage('');
+      if (!isAuthenticated) {
+          setName('');
+          setEmail('');
+      }
+
     } catch (err: any) {
       console.error('Contact form error:', err);
-      setStatus('');
+      setFormStatus('');
       setError(err.message || 'Failed to send message. Please try again.');
     }
   };
@@ -68,7 +84,10 @@ export default function ContactPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900" // Added border
+                disabled={isAuthenticated} // Disable if logged in
+                className={`block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900 ${
+                  isAuthenticated ? 'bg-gray-100 cursor-not-allowed' : '' // Style if disabled
+                }`}
               />
             </div>
           </div>
@@ -89,7 +108,10 @@ export default function ContactPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900" // Added border
+                disabled={isAuthenticated} // Disable if logged in
+                className={`block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900 ${
+                  isAuthenticated ? 'bg-gray-100 cursor-not-allowed' : '' // Style if disabled
+                }`}
               />
             </div>
           </div>
@@ -109,7 +131,7 @@ export default function ContactPage() {
                 required
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900" // Added border
+                className="block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
               />
             </div>
           </div>
@@ -117,15 +139,15 @@ export default function ContactPage() {
           <div>
             <button
               type="submit"
-              disabled={status === 'Submitting...'}
+              disabled={formStatus === 'Submitting...'}
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {status === 'Submitting...' ? 'Sending...' : 'Send Message'}
+              {formStatus === 'Submitting...' ? 'Sending...' : 'Send Message'}
             </button>
           </div>
 
-          {status && status !== 'Submitting...' && (
-            <p className="text-center text-sm text-green-600">{status}</p>
+          {formStatus && formStatus !== 'Submitting...' && (
+            <p className="text-center text-sm text-green-600">{formStatus}</p>
           )}
           {error && (
             <p className="text-center text-sm text-red-600">{error}</p>

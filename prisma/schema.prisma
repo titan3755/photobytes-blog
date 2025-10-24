@@ -88,5 +88,6 @@ model ContactMessage {
   email     String
   message   String
   createdAt DateTime @default(now())
-  isRead    Boolean  @default(false) // Optional: To track if an admin has seen it
+  isRead    Boolean  @default(false)
+  ipAddress String?
 }
