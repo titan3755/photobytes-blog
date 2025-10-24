@@ -49,14 +49,13 @@ export default function ContactPage() {
       }
 
     } catch (err: any) {
-      console.error('Contact form error:', err);
       setFormStatus('');
       setError(err.message || 'Failed to send message. Please try again.');
     }
   };
 
   return (
-    <div className="py-12 px-4 sm:px-6 lg:px-8 min-h-screen min-w-screen bg-gray-50 flex flex-col items-center justify-center ">
+    <div className="py-12 px-4 sm:px-6 lg:px-8 min-h-screen min-w-screen bg-gray-50 flex flex-col items-center justify-center">
       <div className="max-w-3xl mx-auto w-full">
         <div className="text-center">
           <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">

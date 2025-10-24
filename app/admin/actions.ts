@@ -1,60 +1,95 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { Role } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
+import { auth } from '@/auth'; // To ensure only admins can perform actions
 
-/**
- * Updates a user's role.
- * This is a Server Action.
- * @param userId - The ID of the user to update.
- * @param newRole - The new role to assign.
- */
+// --- User Actions ---
+
 export async function updateUserRole(userId: string, newRole: Role) {
-  if (!userId || !newRole) {
-    return { error: 'Invalid input. User ID and role are required.' };
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Not authorized');
+  }
+
+  // Prevent admin from changing their own role via this action
+  if (session.user.id === userId && newRole !== 'ADMIN') {
+      throw new Error('Admin cannot change their own role.');
   }
 
   try {
-    const updatedUser = await prisma.user.update({
+    await prisma.user.update({
       where: { id: userId },
       data: { role: newRole },
     });
-
-    // Revalidate the /admin path to show the new data
-    revalidatePath('/admin');
-
-    return { success: true, user: updatedUser };
+    revalidatePath('/admin'); // Refresh the admin page data
+    return { success: true };
   } catch (error) {
     console.error('Error updating user role:', error);
-    return { error: 'Failed to update user role.' };
+    return { success: false, message: 'Failed to update user role.' };
   }
 }
 
-/**
- * Deletes a user.
- * This is a Server Action.
- * @param userId - The ID of the user to delete.
- */
 export async function deleteUser(userId: string) {
-  if (!userId) {
-    return { error: 'Invalid input. User ID is required.' };
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Not authorized');
+  }
+
+  // Prevent admin from deleting themselves
+  if (session.user.id === userId) {
+      throw new Error('Admin cannot delete their own account.');
   }
 
   try {
-    // You might want to add more checks here,
-    // e.g., don't let an admin delete themselves.
-
+    // Note: onDelete: Cascade in your schema should handle related data (Accounts, Sessions, Articles)
     await prisma.user.delete({
       where: { id: userId },
     });
-
-    // Revalidate the /admin path to show the new data
-    revalidatePath('/admin');
-
+    revalidatePath('/admin'); // Refresh the admin page data
     return { success: true };
   } catch (error) {
     console.error('Error deleting user:', error);
-    return { error: 'Failed to delete user.' };
+    return { success: false, message: 'Failed to delete user.' };
+  }
+}
+
+// --- Contact Message Actions ---
+
+export async function markContactMessageRead(messageId: string, isRead: boolean) {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Not authorized');
+  }
+
+  try {
+    await prisma.contactMessage.update({
+      where: { id: messageId },
+      data: { isRead: isRead }, // Set to the desired state (true for read, false for unread)
+    });
+    revalidatePath('/admin'); // Refresh the admin page data
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating contact message status:', error);
+    return { success: false, message: 'Failed to update message status.' };
+  }
+}
+
+export async function deleteContactMessage(messageId: string) {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Not authorized');
+  }
+
+  try {
+    await prisma.contactMessage.delete({
+      where: { id: messageId },
+    });
+    revalidatePath('/admin'); // Refresh the admin page data
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting contact message:', error);
+    return { success: false, message: 'Failed to delete message.' };
   }
 }
