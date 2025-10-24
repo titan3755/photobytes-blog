@@ -1,8 +1,10 @@
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { Article, Role, ApplicationStatus } from '@prisma/client'; // Import ApplicationStatus
+import { Article, Role, ApplicationStatus } from '@prisma/client';
 import Link from 'next/link';
+// Removed Image import as it's no longer used directly here
 import { redirect } from 'next/navigation';
+import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar'; // 1. Import the new component
 
 // --- Reusable Card Component ---
 function DashboardCard({
@@ -14,6 +16,7 @@ function DashboardCard({
   children: React.ReactNode;
   className?: string;
 }) {
+  // ... (Component remains the same) ...
   return (
     <div
       className={`bg-white p-6 rounded-lg shadow-lg border border-gray-200 ${className}`}
@@ -26,8 +29,8 @@ function DashboardCard({
 
 // --- Article Row Component (for Bloggers/Admins) ---
 function UserArticleRow({ article }: { article: Article }) {
-  // ... (Component remains the same)
-  return (
+  // ... (Component remains the same) ...
+   return (
     <li className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
       <div className="mb-2 sm:mb-0">
         <h3 className="text-lg font-semibold text-gray-900">{article.title}</h3>
@@ -65,7 +68,8 @@ function UserArticleRow({ article }: { article: Article }) {
 
 // Helper for status badges in dashboard
 function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
-   let bgColor = 'bg-gray-100';
+  // ... (Component remains the same) ...
+    let bgColor = 'bg-gray-100';
    let textColor = 'text-gray-800';
    let message = 'Your application status: ';
    if (status === ApplicationStatus.PENDING) {
@@ -97,6 +101,8 @@ function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
    );
 }
 
+// --- getInitials function is now inside UserProfileAvatar ---
+
 
 export default async function Dashboard() {
   const session = await auth();
@@ -119,12 +125,11 @@ export default async function Dashboard() {
     });
   }
 
-  // Fetch user's blogger application status (only if they are a USER)
   let applicationStatus: ApplicationStatus | null = null;
   if (userRole === Role.USER) {
     const application = await prisma.bloggerApplication.findUnique({
       where: { userId: userId },
-      select: { status: true }, // Only select the status
+      select: { status: true },
     });
     applicationStatus = application?.status ?? null;
   }
@@ -132,8 +137,9 @@ export default async function Dashboard() {
   const userCommentsCount = 0; // Placeholder
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 min-w-screen flex flex-col items-center justify-center">
-      <div className="max-w-4xl mx-auto space-y-8">
+    // Applied the UI workaround classes here
+    <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
+      <div className="max-w-4xl w-full mx-auto space-y-8"> {/* Added w-full */}
         {/* Welcome Header */}
         <h1 className="text-4xl font-extrabold text-gray-900 mb-6">
           Welcome, {session.user.username || session.user.name}!
@@ -141,8 +147,7 @@ export default async function Dashboard() {
 
         {/* Admin Panel Link (Conditional) */}
         {userRole === Role.ADMIN && (
-          // ... (Admin link section remains the same) ...
-           <div className="mb-6 p-4 bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-300 rounded-lg shadow-sm text-center">
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-300 rounded-lg shadow-sm text-center">
             <Link
               href="/admin"
               className="font-bold text-lg text-indigo-700 hover:text-indigo-900 transition-colors"
@@ -156,19 +161,29 @@ export default async function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* --- Profile Information Card --- */}
           <DashboardCard title="Your Profile" className="md:col-span-1">
-             {/* ... (Profile Card content remains the same) ... */}
-              <div className="space-y-3 text-gray-700">
-              <p>
-                <span className="font-semibold">Name:</span>{' '}
-                {session.user.name || 'Not Set'}
-              </p>
+            {/* Start: Use the UserProfileAvatar component */}
+            <div className="flex items-center space-x-4 mb-6 pb-6 border-b border-gray-200">
+              <UserProfileAvatar
+                src={session.user.image}
+                name={session.user.name}
+                alt={session.user.name || 'User Avatar'}
+              />
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {session.user.name || 'No Name Set'}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {session.user.email || 'No Email Set'}
+                </p>
+              </div>
+            </div>
+            {/* End: Use the UserProfileAvatar component */}
+
+            <div className="space-y-3 text-gray-700">
+              {/* Profile details remain the same */}
               <p>
                 <span className="font-semibold">Username:</span>{' '}
                 {session.user.username || 'Not Set'}
-              </p>
-              <p>
-                <span className="font-semibold">Email:</span>{' '}
-                {session.user.email || 'Not Set'}
               </p>
               <p>
                 <span className="font-semibold">Role:</span>{' '}
@@ -184,12 +199,12 @@ export default async function Dashboard() {
                   {userRole}
                 </span>
               </p>
-               {session.user.createdAt && (
-                 <p>
+              {session.user.createdAt && (
+                <p>
                   <span className="font-semibold">Joined:</span>{' '}
                   {new Date(session.user.createdAt).toLocaleDateString()}
-                 </p>
-               )}
+                </p>
+              )}
             </div>
             <div className="mt-6 text-right">
               <Link
@@ -203,7 +218,7 @@ export default async function Dashboard() {
 
           {/* --- Comments Placeholder Card --- */}
           <DashboardCard title="Your Comments" className="md:col-span-1">
-            {/* ... (Comments Card content remains the same) ... */}
+            {/* ... (Remains the same) ... */}
               <p className="text-gray-600">
               You have made {userCommentsCount} comments.
             </p>
@@ -219,8 +234,8 @@ export default async function Dashboard() {
             title="Your Articles"
             className="col-span-1 md:col-span-2"
           >
-             {/* ... (Article Management content remains the same) ... */}
-             <div className="flex justify-end mb-4">
+             {/* ... (Remains the same) ... */}
+              <div className="flex justify-end mb-4">
               <Link
                 href="/dashboard/articles/new"
                 className="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm"
@@ -248,15 +263,16 @@ export default async function Dashboard() {
             title="Blogger Application"
             className="col-span-1 md:col-span-2 bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-200"
           >
-            {applicationStatus ? (
+             {/* ... (Remains the same) ... */}
+             {applicationStatus ? (
               // If application exists, show status
               <ApplicationStatusDisplay status={applicationStatus} />
             ) : (
               // If no application, show the apply button
               <>
                 <p className="text-gray-700 mb-6">
-                  Interested in sharing your insights on technology, photography, or
-                  development? Apply to become a blogger on PhotoBytes!
+                  Interested in sharing your insights on technology, photography,
+                  or development? Apply to become a blogger on PhotoBytes!
                 </p>
                 <div className="text-center">
                   <Link

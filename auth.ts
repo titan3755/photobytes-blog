@@ -30,12 +30,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) return null;
-        return user; // Return the full user object (including createdAt)
+        return user;
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile }) {
       if (user?.id) {
         // Initial sign-in
         token.id = user.id;
@@ -45,6 +45,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.username = user.username;
         token.name = user.name;
         token.email = user.email;
+        token.picture = user.image; // Add image as picture
         // @ts-ignore - Add createdAt
         token.createdAt = user.createdAt;
       } else if (token.id) {
@@ -57,7 +58,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.username = dbUser.username;
           token.name = dbUser.name;
           token.email = dbUser.email;
-          token.createdAt = dbUser.createdAt; // <-- Refresh createdAt
+          token.picture = dbUser.image; // Refresh image
+          token.createdAt = dbUser.createdAt;
         }
       }
       return token;
@@ -68,48 +70,52 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (token.id) session.user.id = token.id as string;
         if (token.role) session.user.role = token.role as Role;
         if (token.username) session.user.username = token.username as string;
+        // name, email, image are typically handled by DefaultSession,
+        // but explicitly setting them ensures they are present
         if (token.name) session.user.name = token.name;
         if (token.email) session.user.email = token.email;
-        if (token.createdAt) session.user.createdAt = token.createdAt; // <-- Add createdAt
+        if (token.picture) session.user.image = token.picture; // Map picture back to image
+        if (token.createdAt) session.user.createdAt = token.createdAt;
       }
       return session;
     },
     // Authorized callback remains the same
     authorized({ auth, request }) {
-      const { nextUrl } = request;
-      const pathname = nextUrl.pathname;
-      const isLoggedIn = !!auth?.user; // Check user object in session
-      const userRole = auth?.user?.role; // Get role from session user
-      const isAdmin = userRole === 'ADMIN';
-      const isBlogger = userRole === 'BLOGGER';
+        // ... your existing authorized logic ...
+        const { nextUrl } = request;
+        const pathname = nextUrl.pathname;
+        const isLoggedIn = !!auth?.user; // Check user object in session
+        const userRole = auth?.user?.role; // Get role from session user
+        const isAdmin = userRole === 'ADMIN';
+        const isBlogger = userRole === 'BLOGGER';
 
-      if (pathname.startsWith('/login') || pathname.startsWith('/register')) {
-        if (isLoggedIn) {
-          return NextResponse.redirect(new URL('/dashboard', nextUrl));
+        if (pathname.startsWith('/login') || pathname.startsWith('/register')) {
+            if (isLoggedIn) {
+            return NextResponse.redirect(new URL('/dashboard', nextUrl));
+            }
+            return true;
+        }
+        if (pathname.startsWith('/forbidden')) return true;
+        if (pathname.startsWith('/admin')) {
+            if (!isLoggedIn) return false;
+            if (!isAdmin)
+            return NextResponse.redirect(new URL('/forbidden', nextUrl));
+            return true;
+        }
+        if (pathname.startsWith('/dashboard/articles')) {
+            if (!isLoggedIn) return false;
+            if (!isAdmin && !isBlogger)
+            return NextResponse.redirect(new URL('/forbidden', nextUrl));
+            return true;
+        }
+        if (
+            pathname.startsWith('/dashboard') ||
+            pathname.startsWith('/profile')
+        ) {
+            if (!isLoggedIn) return false;
+            return true;
         }
         return true;
-      }
-      if (pathname.startsWith('/forbidden')) return true;
-      if (pathname.startsWith('/admin')) {
-        if (!isLoggedIn) return false;
-        if (!isAdmin)
-          return NextResponse.redirect(new URL('/forbidden', nextUrl));
-        return true;
-      }
-      if (pathname.startsWith('/dashboard/articles')) {
-        if (!isLoggedIn) return false;
-        if (!isAdmin && !isBlogger)
-          return NextResponse.redirect(new URL('/forbidden', nextUrl));
-        return true;
-      }
-      if (
-        pathname.startsWith('/dashboard') ||
-        pathname.startsWith('/profile')
-      ) {
-        if (!isLoggedIn) return false;
-        return true;
-      }
-      return true;
     },
   },
 });

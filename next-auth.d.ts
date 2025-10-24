@@ -8,14 +8,14 @@ declare module 'next-auth' {
       role: Role;
       username: string | null;
       id: string;
-      createdAt?: Date | string | null; // <-- Add createdAt
-    } & DefaultSession['user']; // Includes name, email, image
+      createdAt?: Date | string | null;
+    } & DefaultSession['user'];
   }
 
   interface User {
     role: Role;
     username: string | null;
-    createdAt?: Date | string | null; // <-- Add createdAt
+    createdAt?: Date | string | null;
   }
 }
 
@@ -26,6 +26,7 @@ declare module 'next-auth/jwt' {
     id: string;
     name?: string | null;
     email?: string | null;
-    createdAt?: Date | string | null; // <-- Add createdAt
+    picture?: string | null;
+    createdAt?: Date | string | null;
   }
 }
