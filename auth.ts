@@ -44,89 +44,75 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // --- All callbacks are now in this file ---
   callbacks: {
     async jwt({ token, user }) {
-      // On sign-in, the 'user' object is available.
-      // For subsequent requests, we fetch from the DB to ensure role is fresh.
       if (user?.id) {
-        // This is a sign-in event.
+        // Initial sign-in
         token.id = user.id;
-        // @ts-ignore - 'user' object has role from authorize or adapter
+        // @ts-ignore
         token.role = user.role;
         // @ts-ignore
         token.username = user.username;
+        token.name = user.name; // <-- Ensure name is added
+        token.email = user.email; // <-- Ensure email is added
       } else if (token.id) {
-        // This is a subsequent request. Re-fetch user to ensure role is up-to-date.
-        // This is crucial for when an admin changes a user's role.
+        // Subsequent requests - refresh role (and potentially name/email)
         const dbUser = await prisma.user.findUnique({
-          where: { id: token.id },
+          where: { id: token.id as string },
         });
         if (dbUser) {
           token.role = dbUser.role;
           token.username = dbUser.username;
+          token.name = dbUser.name; // <-- Refresh name
+          token.email = dbUser.email; // <-- Refresh email
         }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as Role;
-        session.user.username = token.username as string;
+        // Add all properties from token to session
+        if (token.id) session.user.id = token.id as string;
+        if (token.role) session.user.role = token.role as Role;
+        if (token.username) session.user.username = token.username as string;
+        if (token.name) session.user.name = token.name; // <-- Ensure name is added
+        if (token.email) session.user.email = token.email; // <-- Ensure email is added
       }
       return session;
     },
+    // Authorized callback remains the same as your correct version
     authorized({ auth, request }) {
       const { nextUrl } = request;
       const pathname = nextUrl.pathname;
-
-      // 'auth' is the session object (thanks to our session callback)
       const isLoggedIn = !!auth?.user;
       const userRole = auth?.user?.role;
       const isAdmin = userRole === 'ADMIN';
       const isBlogger = userRole === 'BLOGGER';
 
-      // 1. Handle public pages that logged-in users shouldn't see
       if (pathname.startsWith('/login') || pathname.startsWith('/register')) {
         if (isLoggedIn) {
           return NextResponse.redirect(new URL('/dashboard', nextUrl));
         }
         return true;
       }
-
-      // 2. Handle /forbidden page
-      if (pathname.startsWith('/forbidden')) {
+      if (pathname.startsWith('/forbidden')) return true;
+      if (pathname.startsWith('/admin')) {
+        if (!isLoggedIn) return false;
+        if (!isAdmin)
+          return NextResponse.redirect(new URL('/forbidden', nextUrl));
         return true;
       }
-
-      // 3. Protect /admin routes
-      if (pathname.startsWith('/admin')) {
-        if (isLoggedIn) {
-          if (isAdmin) {
-            return true; // Is admin, allow access
-          } else {
-            // Is logged in, but NOT admin -> Redirect to Forbidden
-            return NextResponse.redirect(new URL('/forbidden', nextUrl));
-          }
-        }
-        return false; // Not logged in -> Redirect to /login
-      }
-
-      // 4. Protect /dashboard/articles
       if (pathname.startsWith('/dashboard/articles')) {
-        if (isLoggedIn) {
-          return isAdmin || isBlogger; // Admin or Blogger
-        }
-        return false; // Not logged in
+        if (!isLoggedIn) return false;
+        if (!isAdmin && !isBlogger)
+          return NextResponse.redirect(new URL('/forbidden', nextUrl));
+        return true;
       }
-
-      // 5. Protect /dashboard (main) and /profile routes
       if (
         pathname.startsWith('/dashboard') ||
         pathname.startsWith('/profile')
       ) {
-        return isLoggedIn; // Any logged-in user
+        if (!isLoggedIn) return false;
+        return true;
       }
-
-      // 6. Allow all other routes
       return true;
     },
   },
