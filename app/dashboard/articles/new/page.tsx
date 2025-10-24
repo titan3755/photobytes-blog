@@ -3,7 +3,8 @@
 import { useState, useTransition } from 'react';
 import TiptapEditor from '@/components/editor/TiptapEditor'; // Adjust path if needed
 import { useRouter } from 'next/navigation';
-import { createArticle } from './actions'; // 1. Import the Server Action
+import { createArticle } from './actions'; // Import the Server Action
+import Link from 'next/link';
 
 export default function NewArticlePage() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function NewArticlePage() {
 
     startTransition(async () => {
       try {
-        // 2. Call the Server Action
+        // Call the Server Action
         const result = await createArticle({
           title: title.trim(),
           slug: slug.trim(),
@@ -79,9 +80,10 @@ export default function NewArticlePage() {
     });
   };
 
+  // Apply workaround classes here
   return (
-    <div className="min-h-screen w-full bg-gray-50 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+    <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
+      <div className="max-w-4xl w-full mx-auto bg-white p-6 rounded-lg shadow-lg border border-gray-200"> {/* Added w-full */}
         <h1 className="text-3xl font-bold text-gray-900 mb-6">
           Create New Article
         </h1>
@@ -93,7 +95,7 @@ export default function NewArticlePage() {
               htmlFor="title"
               className="block text-sm font-medium text-gray-700"
             >
-              Title
+              Title <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -111,7 +113,7 @@ export default function NewArticlePage() {
               htmlFor="slug"
               className="block text-sm font-medium text-gray-700"
             >
-              Slug (URL)
+              Slug (URL) <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -123,7 +125,7 @@ export default function NewArticlePage() {
             />
             <p className="mt-1 text-xs text-gray-500">
               Auto-generated from title. Use lowercase letters, numbers, and
-              hyphens.
+              hyphens. Must be unique.
             </p>
           </div>
 
@@ -177,6 +179,9 @@ export default function NewArticlePage() {
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-4 pt-4">
+             <Link href="/dashboard" className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                 Cancel
+             </Link>
             <button
               type="button"
               onClick={() => handleSubmit(false)} // Save as Draft
