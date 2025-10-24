@@ -2,9 +2,9 @@ import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { Article, Role, ApplicationStatus } from '@prisma/client';
 import Link from 'next/link';
-// Removed Image import as it's no longer used directly here
 import { redirect } from 'next/navigation';
-import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar'; // 1. Import the new component
+import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar';
+import UserArticleRow from '@/components/dashboard/UserArticleRow'; // 1. Import the new component
 
 // --- Reusable Card Component ---
 function DashboardCard({
@@ -27,44 +27,8 @@ function DashboardCard({
   );
 }
 
-// --- Article Row Component (for Bloggers/Admins) ---
-function UserArticleRow({ article }: { article: Article }) {
-  // ... (Component remains the same) ...
-   return (
-    <li className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
-      <div className="mb-2 sm:mb-0">
-        <h3 className="text-lg font-semibold text-gray-900">{article.title}</h3>
-        <span
-          className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
-            article.published
-              ? 'bg-green-100 text-green-800'
-              : 'bg-yellow-100 text-yellow-800'
-          }`}
-        >
-          {article.published ? 'Published' : 'Draft'}
-        </span>
-        <p className="text-sm text-gray-500 mt-1">
-          Last updated:{' '}
-          {new Date(article.updatedAt).toLocaleDateString()}
-        </p>
-      </div>
-      <div className="flex space-x-2 flex-shrink-0">
-        <Link
-          href={`/dashboard/articles/edit/${article.slug}`}
-          className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded-md hover:bg-blue-600 transition-colors"
-        >
-          Edit
-        </Link>
-        <Link
-          href={`/dashboard/articles/delete/${article.slug}`}
-          className="px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-md hover:bg-red-600 transition-colors"
-        >
-          Delete
-        </Link>
-      </div>
-    </li>
-  );
-}
+// --- REMOVED UserArticleRow function from here ---
+
 
 // Helper for status badges in dashboard
 function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
@@ -100,8 +64,6 @@ function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
       </div>
    );
 }
-
-// --- getInitials function is now inside UserProfileAvatar ---
 
 
 export default async function Dashboard() {
@@ -147,7 +109,8 @@ export default async function Dashboard() {
 
         {/* Admin Panel Link (Conditional) */}
         {userRole === Role.ADMIN && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-300 rounded-lg shadow-sm text-center">
+          // ... (Admin link section remains the same) ...
+           <div className="mb-6 p-4 bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-300 rounded-lg shadow-sm text-center">
             <Link
               href="/admin"
               className="font-bold text-lg text-indigo-700 hover:text-indigo-900 transition-colors"
@@ -234,7 +197,6 @@ export default async function Dashboard() {
             title="Your Articles"
             className="col-span-1 md:col-span-2"
           >
-             {/* ... (Remains the same) ... */}
               <div className="flex justify-end mb-4">
               <Link
                 href="/dashboard/articles/new"
@@ -246,6 +208,7 @@ export default async function Dashboard() {
             {userArticles.length > 0 ? (
               <ul className="space-y-3">
                 {userArticles.map((article) => (
+                   // 2. Use the imported UserArticleRow component
                   <UserArticleRow key={article.id} article={article} />
                 ))}
               </ul>
