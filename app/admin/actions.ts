@@ -5,7 +5,36 @@ import prisma from '@/lib/prisma';
 import { Role, ApplicationStatus } from '@prisma/client';
 import { auth } from '@/auth';
 
-// ... (createCategory, deleteCategory, getCategories remain the same) ...
+// --- START: New Comment Action ---
+export async function toggleCommentStatus(
+  userId: string,
+  currentStatus: boolean
+): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    return { success: false, message: 'Not authorized.' };
+  }
+  if (session.user.id === userId) {
+    return { success: false, message: 'Admin cannot change their own comment status.' };
+  }
+
+  try {
+    const newStatus = !currentStatus;
+    await prisma.user.update({
+      where: { id: userId },
+      data: { canComment: newStatus },
+    });
+    revalidatePath('/admin');
+    return { success: true, message: `User commenting ${newStatus ? 'enabled' : 'disabled'}.` };
+  } catch (error) {
+    console.error('Error toggling comment status:', error);
+    return { success: false, message: 'An internal error occurred.' };
+  }
+}
+// --- END: New Comment Action ---
+
+// --- Category Actions ---
+// ... (createCategory, deleteCategory, getCategories) ...
 export async function createCategory(data: { name: string, slug: string }) {
     const session = await auth();
     if (session?.user?.role !== 'ADMIN') {
@@ -69,7 +98,8 @@ export async function getCategories() {
     }
 }
 
-// ... (updateUserRole, deleteUser remain the same) ...
+// --- User Actions ---
+// ... (updateUserRole, deleteUser) ...
 export async function updateUserRole(userId: string, newRole: Role) {
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') {
@@ -108,7 +138,7 @@ export async function deleteUser(userId: string) {
   }
 }
 
-// ... (markContactMessageRead, deleteContactMessage remain the same) ...
+// ... (Rest of actions.ts: Contact, Blogger, Article, Notification) ...
 export async function markContactMessageRead(
   messageId: string,
   isRead: boolean
@@ -143,8 +173,6 @@ export async function deleteContactMessage(messageId: string) {
     return { success: false, message: 'Failed to delete message.' };
   }
 }
-
-// ... (approveBloggerApplication, rejectBloggerApplication remain the same) ...
 export async function approveBloggerApplication(
   applicationId: string,
   userId: string
@@ -188,8 +216,6 @@ export async function rejectBloggerApplication(applicationId: string) {
     return { success: false, message: 'Failed to reject application.' };
   }
 }
-
-// ... (deleteArticle remains the same) ...
 export async function deleteArticle(articleId: string) {
     const session = await auth();
     if (!session?.user?.id) {
@@ -223,8 +249,6 @@ export async function deleteArticle(articleId: string) {
       return { success: false, message: 'Failed to delete article.' };
     }
 }
-
-// ... (sendNotification, markNotificationAsRead remain the same) ...
 type TargetAudience = 'ALL_USERS' | 'ALL_BLOGGERS' | 'ALL_ADMINS' | { userId: string };
 interface SendNotificationData {
     title: string;
@@ -307,17 +331,12 @@ export async function markNotificationAsRead(userNotificationId: string): Promis
         return { success: false, message: 'An internal error occurred.' };
     }
 }
-
-// --- START: New Notification Action ---
 export async function deleteNotification(notificationId: string) {
     const session = await auth();
     if (session?.user?.role !== 'ADMIN') {
         return { success: false, message: 'Not authorized.' };
     }
-
     try {
-        // Deleting the main notification will cascade and delete all
-        // related UserNotification records
         await prisma.notification.delete({
             where: { id: notificationId },
         });
@@ -328,5 +347,3 @@ export async function deleteNotification(notificationId: string) {
         return { success: false, message: 'Failed to delete notification.' };
     }
 }
-// --- END: New Notification Action ---
-

@@ -13,7 +13,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     ...authConfig.providers, // Google and Facebook
     CredentialsProvider({
-      // ... (CredentialsProvider config remains the same)
+      // ... (CredentialsProvider config remains the same) ...
       async authorize(credentials) {
         const { email, username, password } = credentials;
         if (typeof password !== 'string') return null;
@@ -35,7 +35,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user }) {
       if (user?.id) {
         // Initial sign-in
         token.id = user.id;
@@ -45,21 +45,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.username = user.username;
         token.name = user.name;
         token.email = user.email;
-        token.picture = user.image; // Add image as picture
-        // @ts-ignore - Add createdAt
+        token.picture = user.image;
+        // @ts-ignore
         token.createdAt = user.createdAt;
+        // @ts-ignore
+        token.canComment = user.canComment; // 1. Add canComment on sign-in
       } else if (token.id) {
         // Subsequent requests - refresh data
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
+          select: { // Select only necessary fields
+            role: true,
+            username: true,
+            name: true,
+            email: true,
+            image: true,
+            createdAt: true,
+            canComment: true, // 2. Refresh canComment
+          }
         });
         if (dbUser) {
           token.role = dbUser.role;
           token.username = dbUser.username;
           token.name = dbUser.name;
           token.email = dbUser.email;
-          token.picture = dbUser.image; // Refresh image
+          token.picture = dbUser.image;
           token.createdAt = dbUser.createdAt;
+          token.canComment = dbUser.canComment; // 3. Assign refreshed value
         }
       }
       return token;
@@ -70,12 +82,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (token.id) session.user.id = token.id as string;
         if (token.role) session.user.role = token.role as Role;
         if (token.username) session.user.username = token.username as string;
-        // name, email, image are typically handled by DefaultSession,
-        // but explicitly setting them ensures they are present
         if (token.name) session.user.name = token.name;
         if (token.email) session.user.email = token.email;
-        if (token.picture) session.user.image = token.picture; // Map picture back to image
+        if (token.picture) session.user.image = token.picture;
         if (token.createdAt) session.user.createdAt = token.createdAt;
+        session.user.canComment = token.canComment as boolean; // 4. Add to session
       }
       return session;
     },
@@ -84,8 +95,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // ... your existing authorized logic ...
         const { nextUrl } = request;
         const pathname = nextUrl.pathname;
-        const isLoggedIn = !!auth?.user; // Check user object in session
-        const userRole = auth?.user?.role; // Get role from session user
+        const isLoggedIn = !!auth?.user;
+        const userRole = auth?.user?.role;
         const isAdmin = userRole === 'ADMIN';
         const isBlogger = userRole === 'BLOGGER';
 

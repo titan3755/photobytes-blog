@@ -7,7 +7,7 @@ import {
   BloggerApplication,
   ApplicationStatus,
   Category,
-  Notification, // Import Notification
+  Notification,
 } from '@prisma/client';
 import UserRowActions from './UserRowActions';
 import ContactMessageRowActions from './ContactMessageRowActions';
@@ -16,7 +16,7 @@ import AdminArticleRowActions from './AdminArticleRowActions';
 import CategoryForm from './CategoryForm';
 import CategoryRowActions from './CategoryRowActions';
 import SendNotificationForm from './SendNotificationForm';
-import NotificationRowActions from './NotificationRowActions'; // Import new actions
+import NotificationRowActions from './NotificationRowActions';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -72,8 +72,7 @@ export default async function AdminPage() {
     redirect('/forbidden');
   }
 
-  // 1. Fetch data (remains the same)
-  // ... (all data fetching logic) ...
+  // 1. Fetch data
   const totalUsers = await prisma.user.count();
   const totalArticles = await prisma.article.count();
   const publishedArticlesCount = await prisma.article.count({
@@ -83,10 +82,20 @@ export default async function AdminPage() {
     orderBy: { createdAt: 'desc' },
     include: { author: { select: { name: true, username: true, email: true } } },
   });
+  // --- MODIFIED: Select canComment ---
   const allUsers = await prisma.user.findMany({
     orderBy: { createdAt: 'desc' },
-    select: { id: true, name: true, username: true, email: true, createdAt: true, role: true }, // Select necessary fields
+    select: { 
+        id: true, 
+        name: true, 
+        username: true, 
+        email: true, 
+        createdAt: true, 
+        role: true, 
+        canComment: true // Fetch the comment status
+    },
   });
+  // --- END MODIFICATION ---
   const contactMessages = await prisma.contactMessage.findMany({
     orderBy: { createdAt: 'desc' },
   });
@@ -111,7 +120,7 @@ export default async function AdminPage() {
       orderBy: { createdAt: 'desc' },
       include: {
           _count: {
-              select: { userNotifications: true } // Count recipients
+              select: { userNotifications: true }
           }
       }
   });
@@ -126,8 +135,7 @@ export default async function AdminPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-           {/* ... (Stats remain the same) ... */}
-            <StatCard title="Total Users" value={totalUsers} />
+           <StatCard title="Total Users" value={totalUsers} />
           <StatCard title="Total Articles" value={totalArticles} />
           <StatCard
             title="Published Articles"
@@ -137,23 +145,20 @@ export default async function AdminPage() {
           <StatCard
             title="Pending Applications"
             value={pendingApplicationsCount}
-            />
+          />
         </div>
         
          {/* --- Category Management Section --- */}
          <div className="bg-white p-6 rounded-lg shadow-lg">
-            {/* ... (Category section remains the same) ... */}
             <h2 className="text-2xl font-bold text-gray-800 mb-6"> Category Management </h2> <div className="grid grid-cols-1 md:grid-cols-3 gap-8"> <div className="md:col-span-1"> <h3 className="text-lg font-medium text-gray-900 mb-4">Add New Category</h3> <CategoryForm /> </div> <div className="md:col-span-2"> <h3 className="text-lg font-medium text-gray-900 mb-4">Existing Categories ({allCategories.length})</h3> <div className="border border-gray-200 rounded-lg max-h-64 overflow-y-auto"> <ul className="divide-y divide-gray-200"> {allCategories.length > 0 ? ( allCategories.map((category) => ( <li key={category.id} className="px-4 py-3 flex items-center justify-between"> <div> <p className="text-sm font-medium text-gray-900">{category.name}</p> <p className="text-xs text-gray-500">{category.slug}</p> </div> <CategoryRowActions categoryId={category.id} categoryName={category.name} /> </li> )) ) : ( <li className="px-4 py-3 text-sm text-gray-500 text-center">No categories created yet.</li> )} </ul> </div> </div> </div>
          </div>
          
-         {/* --- START: New Notification Section --- */}
+         {/* --- New Notification Section --- */}
          <div className="bg-white p-6 rounded-lg shadow-lg">
-             {/* ... (Notification section remains the same) ... */}
              <h2 className="text-2xl font-bold text-gray-800 mb-6"> Send Notification </h2> <SendNotificationForm allUsers={allUsers} />
          </div>
-         {/* --- END: New Notification Section --- */}
 
-         {/* --- START: All Notifications Table --- */}
+         {/* --- All Notifications Table --- */}
          <div className="bg-white p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">
             Sent Notifications Log
@@ -193,8 +198,6 @@ export default async function AdminPage() {
               }</tbody></table>
           </div>
         </div>
-         {/* --- END: All Notifications Table --- */}
-
 
          {/* --- All Articles Management Table --- */}
         <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -254,21 +257,43 @@ export default async function AdminPage() {
         <div className="bg-white p-6 rounded-lg shadow-lg">
             <h2 className="text-2xl font-bold text-gray-800 mb-6"> User Management </h2>
             <div className="overflow-x-auto">
-              <table className="w-full divide-y divide-gray-200"><thead className="bg-gray-50"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th><th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th></tr></thead><tbody className="bg-white divide-y divide-gray-200">{
+              <table className="w-full divide-y divide-gray-200"><thead className="bg-gray-50"><tr>
+                  {/* --- MODIFIED: Add "Comments" column --- */}
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+                </tr></thead><tbody className="bg-white divide-y divide-gray-200">{
                 allUsers.length > 0 ? (
                   allUsers.map((user) => (
                     <tr key={user.id}>
                       <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm font-medium text-gray-900">{user.name || user.username || 'N/A'}</div> </td>
                       <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm text-gray-500">{user.email || 'N/A'}</div> </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'} </td>
+                      {/* --- MODIFIED: Add Can Comment Status --- */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                         <span className={`px-2 py-0.5 rounded-full text-xs ${user.canComment ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                           {user.canComment ? 'Allowed' : 'Blocked'}
+                         </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap"> <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ADMIN' ? 'bg-red-100 text-red-800' : user.role === 'BLOGGER' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}> {user.role} </span> </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"> <UserRowActions userId={user.id} currentRole={user.role} isCurrentUser={user.id === session.user.id} /> </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        {/* --- MODIFIED: Pass canComment prop --- */}
+                         <UserRowActions 
+                            userId={user.id} 
+                            currentRole={user.role} 
+                            isCurrentUser={user.id === session.user.id} 
+                            canComment={user.canComment} // Pass the status
+                         />
+                      </td>
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan={5} className="px-6 py-4 text-center text-gray-500">No users found.</td></tr>
-                )
-              }</tbody></table>
+                  <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500">No users found.</td></tr>
+                )}
+              </tbody></table>
             </div>
         </div>
 

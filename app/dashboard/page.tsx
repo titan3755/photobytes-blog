@@ -4,16 +4,17 @@ import {
   Article,
   Role,
   ApplicationStatus,
-  UserNotification, // Import notification types
+  UserNotification,
   Notification,
+  Comment, // Import Comment
 } from '@prisma/client';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar';
 import UserArticleRow from '@/components/dashboard/UserArticleRow';
-import NotificationItem from '@/components/dashboard/NotificationItem'; // 1. Import the new component
+import NotificationItem from '@/components/dashboard/NotificationItem';
 
-// --- Reusable Card Component ---
+// ... (DashboardCard and ApplicationStatusDisplay helpers remain the same) ...
 function DashboardCard({
   title,
   children,
@@ -23,7 +24,6 @@ function DashboardCard({
   children: React.ReactNode;
   className?: string;
 }) {
-  // ... (Component remains the same) ...
   return (
     <div
       className={`bg-white p-6 rounded-lg shadow-lg border border-gray-200 ${className}`}
@@ -33,11 +33,8 @@ function DashboardCard({
     </div>
   );
 }
-
-// Helper for status badges in dashboard
 function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
-  // ... (Component remains the same) ...
-    let bgColor = 'bg-gray-100';
+   let bgColor = 'bg-gray-100';
    let textColor = 'text-gray-800';
    let message = 'Your application status: ';
    if (status === ApplicationStatus.PENDING) {
@@ -82,22 +79,20 @@ export default async function Dashboard() {
   const userRole = session.user.role;
   const canPostArticles = userRole === Role.ADMIN || userRole === Role.BLOGGER;
 
-  // --- 2. Fetch Notifications ---
+  // --- Fetch Notifications ---
   const userNotifications = await prisma.userNotification.findMany({
     where: { userId: userId },
     include: {
-      notification: true, // Include the actual notification details
+      notification: true,
     },
     orderBy: {
-      notification: { createdAt: 'desc' }, // Order by when the notification was created
+      notification: { createdAt: 'desc' },
     },
-    take: 20, // Limit to recent 20
+    take: 20,
   });
-
-  // Calculate unread count
   const unreadCount = userNotifications.filter((n) => !n.isRead).length;
 
-  // --- Fetch Other Data ---
+  // --- Fetch Articles ---
   let userArticles: Article[] = [];
   if (canPostArticles) {
     userArticles = await prisma.article.findMany({
@@ -106,6 +101,7 @@ export default async function Dashboard() {
     });
   }
 
+  // --- Fetch Application Status ---
   let applicationStatus: ApplicationStatus | null = null;
   if (userRole === Role.USER) {
     const application = await prisma.bloggerApplication.findUnique({
@@ -115,19 +111,28 @@ export default async function Dashboard() {
     applicationStatus = application?.status ?? null;
   }
 
-  const userCommentsCount = 0; // Placeholder
+  // --- Fetch Recent Comments ---
+  const userComments = await prisma.comment.findMany({
+      where: { authorId: userId },
+      orderBy: { createdAt: 'desc' },
+      take: 5, // Get 5 most recent comments
+      include: { 
+          article: { // Include article title and slug
+              select: { title: true, slug: true }
+          }
+      }
+  });
+
 
   return (
-    // Applied the UI workaround classes here
     <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
       <div className="max-w-4xl w-full mx-auto space-y-8">
         {/* Welcome Header */}
-        {/* 3. Wrap Header in flex for bell icon */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-4xl font-extrabold text-gray-900">
             Welcome, {session.user.username || session.user.name}!
           </h1>
-          {/* 4. Add Notification Bell Icon */}
+          {/* Notification Bell Icon */}
           <div className="relative">
             <svg
               className="h-8 w-8 text-gray-500 hover:text-gray-700"
@@ -162,14 +167,14 @@ export default async function Dashboard() {
           </div>
         )}
 
-        {/* --- 5. Add Notification Card --- */}
+        {/* Notification Card */}
         <DashboardCard title="Your Notifications" className="md:col-span-2">
           {userNotifications.length > 0 ? (
             <ul className="space-y-3 max-h-96 overflow-y-auto pr-2">
               {userNotifications.map((item) => (
                 <NotificationItem
                   key={item.id}
-                  item={item as UserNotification & { notification: Notification }} // Type assertion
+                  item={item as UserNotification & { notification: Notification }}
                 />
               ))}
             </ul>
@@ -179,7 +184,6 @@ export default async function Dashboard() {
             </p>
           )}
         </DashboardCard>
-        {/* --- End Notification Card --- */}
 
 
         {/* Grid Layout for Cards */}
@@ -238,15 +242,26 @@ export default async function Dashboard() {
             </div>
           </DashboardCard>
 
-          {/* --- Comments Placeholder Card --- */}
-          <DashboardCard title="Your Comments" className="md:col-span-1">
-            {/* ... (Remains the same) ... */}
-              <p className="text-gray-600">
-              You have made {userCommentsCount} comments.
-            </p>
-            <p className="mt-4 text-sm text-gray-500 italic">
-              (Comment management features coming soon!)
-            </p>
+          {/* --- Updated Comments Card --- */}
+          <DashboardCard title="Your Recent Comments" className="md:col-span-1">
+             {userComments.length > 0 ? (
+                <ul className="space-y-3 max-h-64 overflow-y-auto"> {/* Added max-h and overflow */}
+                    {userComments.map(comment => (
+                        <li key={comment.id} className="border-b border-gray-200 pb-3 last:border-b-0">
+                             <p className="text-gray-700 text-sm truncate" title={comment.content}>
+                                {comment.content}
+                             </p>
+                             <p className="text-xs text-gray-500 mt-1">
+                                On: <Link href={`/blog/${comment.article.slug}`} className="text-blue-600 hover:underline">{comment.article.title}</Link>
+                             </p>
+                        </li>
+                    ))}
+                </ul>
+             ) : (
+                <p className="text-gray-500 text-center py-4">
+                    You haven&apos;t posted any comments yet.
+                </p>
+             )}
           </DashboardCard>
         </div>
 

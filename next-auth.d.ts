@@ -9,6 +9,7 @@ declare module 'next-auth' {
       username: string | null;
       id: string;
       createdAt?: Date | string | null;
+      canComment: boolean; // 1. Add canComment
     } & DefaultSession['user'];
   }
 
@@ -16,6 +17,7 @@ declare module 'next-auth' {
     role: Role;
     username: string | null;
     createdAt?: Date | string | null;
+    canComment: boolean; // 2. Add canComment
   }
 }
 
@@ -28,5 +30,6 @@ declare module 'next-auth/jwt' {
     email?: string | null;
     picture?: string | null;
     createdAt?: Date | string | null;
+    canComment: boolean; // 3. Add canComment
   }
 }
