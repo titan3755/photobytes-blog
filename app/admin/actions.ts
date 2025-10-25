@@ -5,34 +5,6 @@ import prisma from '@/lib/prisma';
 import { Role, ApplicationStatus } from '@prisma/client';
 import { auth } from '@/auth';
 
-// --- START: New Comment Action ---
-export async function toggleCommentStatus(
-  userId: string,
-  currentStatus: boolean
-): Promise<{ success: boolean; message: string }> {
-  const session = await auth();
-  if (session?.user?.role !== 'ADMIN') {
-    return { success: false, message: 'Not authorized.' };
-  }
-  if (session.user.id === userId) {
-    return { success: false, message: 'Admin cannot change their own comment status.' };
-  }
-
-  try {
-    const newStatus = !currentStatus;
-    await prisma.user.update({
-      where: { id: userId },
-      data: { canComment: newStatus },
-    });
-    revalidatePath('/admin');
-    return { success: true, message: `User commenting ${newStatus ? 'enabled' : 'disabled'}.` };
-  } catch (error) {
-    console.error('Error toggling comment status:', error);
-    return { success: false, message: 'An internal error occurred.' };
-  }
-}
-// --- END: New Comment Action ---
-
 // --- Category Actions ---
 // ... (createCategory, deleteCategory, getCategories) ...
 export async function createCategory(data: { name: string, slug: string }) {
@@ -99,7 +71,31 @@ export async function getCategories() {
 }
 
 // --- User Actions ---
-// ... (updateUserRole, deleteUser) ...
+// ... (toggleCommentStatus, updateUserRole, deleteUser) ...
+export async function toggleCommentStatus(
+  userId: string,
+  currentStatus: boolean
+): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    return { success: false, message: 'Not authorized.' };
+  }
+  if (session.user.id === userId) {
+    return { success: false, message: 'Admin cannot change their own comment status.' };
+  }
+  try {
+    const newStatus = !currentStatus;
+    await prisma.user.update({
+      where: { id: userId },
+      data: { canComment: newStatus },
+    });
+    revalidatePath('/admin');
+    return { success: true, message: `User commenting ${newStatus ? 'enabled' : 'disabled'}.` };
+  } catch (error) {
+    console.error('Error toggling comment status:', error);
+    return { success: false, message: 'An internal error occurred.' };
+  }
+}
 export async function updateUserRole(userId: string, newRole: Role) {
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') {
@@ -138,7 +134,8 @@ export async function deleteUser(userId: string) {
   }
 }
 
-// ... (Rest of actions.ts: Contact, Blogger, Article, Notification) ...
+// --- Contact Message Actions ---
+// ... (markContactMessageRead, deleteContactMessage) ...
 export async function markContactMessageRead(
   messageId: string,
   isRead: boolean
@@ -173,6 +170,9 @@ export async function deleteContactMessage(messageId: string) {
     return { success: false, message: 'Failed to delete message.' };
   }
 }
+
+// --- Blogger Application Actions ---
+// ... (approveBloggerApplication, rejectBloggerApplication) ...
 export async function approveBloggerApplication(
   applicationId: string,
   userId: string
@@ -216,6 +216,9 @@ export async function rejectBloggerApplication(applicationId: string) {
     return { success: false, message: 'Failed to reject application.' };
   }
 }
+
+// --- Article Action ---
+// ... (deleteArticle) ...
 export async function deleteArticle(articleId: string) {
     const session = await auth();
     if (!session?.user?.id) {
@@ -249,6 +252,9 @@ export async function deleteArticle(articleId: string) {
       return { success: false, message: 'Failed to delete article.' };
     }
 }
+
+// --- Notification Actions ---
+// ... (sendNotification, markNotificationAsRead, deleteNotification) ...
 type TargetAudience = 'ALL_USERS' | 'ALL_BLOGGERS' | 'ALL_ADMINS' | { userId: string };
 interface SendNotificationData {
     title: string;
@@ -347,3 +353,35 @@ export async function deleteNotification(notificationId: string) {
         return { success: false, message: 'Failed to delete notification.' };
     }
 }
+
+// --- START: New Comment Action ---
+export async function deleteComment(commentId: string) {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    return { success: false, message: 'Not authorized.' };
+  }
+
+  try {
+    // We need to find the article slug *before* deleting
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { article: { select: { slug: true } } },
+    });
+    
+    await prisma.comment.delete({
+      where: { id: commentId },
+    });
+
+    revalidatePath('/admin');
+    revalidatePath('/dashboard');
+    // Revalidate the specific article page
+    if (comment?.article?.slug) {
+        revalidatePath(`/blog/${comment.article.slug}`);
+    }
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    return { success: false, message: 'Failed to delete comment.' };
+  }
+}
+// --- END: New Comment Action ---

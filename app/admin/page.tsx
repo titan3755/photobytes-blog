@@ -8,6 +8,7 @@ import {
   ApplicationStatus,
   Category,
   Notification,
+  Comment,
 } from '@prisma/client';
 import UserRowActions from './UserRowActions';
 import ContactMessageRowActions from './ContactMessageRowActions';
@@ -17,6 +18,7 @@ import CategoryForm from './CategoryForm';
 import CategoryRowActions from './CategoryRowActions';
 import SendNotificationForm from './SendNotificationForm';
 import NotificationRowActions from './NotificationRowActions';
+import CommentRowActions from './CommentRowActions';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -82,20 +84,10 @@ export default async function AdminPage() {
     orderBy: { createdAt: 'desc' },
     include: { author: { select: { name: true, username: true, email: true } } },
   });
-  // --- MODIFIED: Select canComment ---
   const allUsers = await prisma.user.findMany({
     orderBy: { createdAt: 'desc' },
-    select: { 
-        id: true, 
-        name: true, 
-        username: true, 
-        email: true, 
-        createdAt: true, 
-        role: true, 
-        canComment: true // Fetch the comment status
-    },
+    select: { id: true, name: true, username: true, email: true, createdAt: true, role: true, canComment: true },
   });
-  // --- END MODIFICATION ---
   const contactMessages = await prisma.contactMessage.findMany({
     orderBy: { createdAt: 'desc' },
   });
@@ -124,6 +116,15 @@ export default async function AdminPage() {
           }
       }
   });
+  const totalComments = await prisma.comment.count();
+  const allComments = await prisma.comment.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      author: { select: { name: true, username: true, email: true } },
+      article: { select: { title: true, slug: true } },
+    },
+    take: 50, // Paginate or limit initial fetch
+  });
 
 
   return (
@@ -134,13 +135,14 @@ export default async function AdminPage() {
         </h1>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-           <StatCard title="Total Users" value={totalUsers} />
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-6 mb-12">
+          <StatCard title="Total Users" value={totalUsers} />
           <StatCard title="Total Articles" value={totalArticles} />
           <StatCard
             title="Published Articles"
             value={publishedArticlesCount}
           />
+           <StatCard title="Total Comments" value={totalComments} />
           <StatCard title="Unread Messages" value={unreadMessagesCount} />
           <StatCard
             title="Pending Applications"
@@ -258,7 +260,6 @@ export default async function AdminPage() {
             <h2 className="text-2xl font-bold text-gray-800 mb-6"> User Management </h2>
             <div className="overflow-x-auto">
               <table className="w-full divide-y divide-gray-200"><thead className="bg-gray-50"><tr>
-                  {/* --- MODIFIED: Add "Comments" column --- */}
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
@@ -272,7 +273,6 @@ export default async function AdminPage() {
                       <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm font-medium text-gray-900">{user.name || user.username || 'N/A'}</div> </td>
                       <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm text-gray-500">{user.email || 'N/A'}</div> </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'} </td>
-                      {/* --- MODIFIED: Add Can Comment Status --- */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                          <span className={`px-2 py-0.5 rounded-full text-xs ${user.canComment ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                            {user.canComment ? 'Allowed' : 'Blocked'}
@@ -280,12 +280,11 @@ export default async function AdminPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap"> <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ADMIN' ? 'bg-red-100 text-red-800' : user.role === 'BLOGGER' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}> {user.role} </span> </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {/* --- MODIFIED: Pass canComment prop --- */}
                          <UserRowActions 
                             userId={user.id} 
                             currentRole={user.role} 
                             isCurrentUser={user.id === session.user.id} 
-                            canComment={user.canComment} // Pass the status
+                            canComment={user.canComment}
                          />
                       </td>
                     </tr>
@@ -295,6 +294,48 @@ export default async function AdminPage() {
                 )}
               </tbody></table>
             </div>
+        </div>
+
+        {/* --- Comment Management Table --- */}
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            Recent Comments
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full divide-y divide-gray-200"><thead className="bg-gray-50"><tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">On Article</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+                </tr></thead><tbody className="bg-white divide-y divide-gray-200">{
+                allComments.length > 0 ? (
+                  allComments.map((comment) => (
+                    <tr key={comment.id}>
+                      <td className="px-6 py-4 max-w-sm">
+                         <p className="text-sm text-gray-700 truncate" title={comment.content}>{comment.content}</p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {comment.author?.name || comment.author?.username || 'N/A'}
+                      </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <Link href={`/blog/${comment.article.slug}`} className="text-sm text-blue-600 hover:underline truncate max-w-xs" title={comment.article.title}>
+                           {comment.article.title}
+                         </Link>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                         {new Date(comment.createdAt).toLocaleString()}
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                         <CommentRowActions commentId={comment.id} commentContent={comment.content} />
+                       </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan={5} className="px-6 py-4 text-center text-gray-500">No comments found.</td></tr>
+                )
+              }</tbody></table>
+          </div>
         </div>
 
         {/* --- Contact Message Management Table --- */}
@@ -329,3 +370,4 @@ export default async function AdminPage() {
     </div>
   );
 }
+
