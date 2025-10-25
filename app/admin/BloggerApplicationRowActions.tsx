@@ -5,19 +5,21 @@ import { ApplicationStatus } from '@prisma/client';
 import {
   approveBloggerApplication,
   rejectBloggerApplication,
-} from './actions'; // Import the new actions
+} from './actions';
+import BloggerApplicationModal from './BloggerApplicationModal';
+// 1. Import the shared type from the modal file
+import type { ApplicationWithUser } from './BloggerApplicationModal';
+
+// 2. Remove the local type definition that was here
 
 export default function BloggerApplicationRowActions({
-  applicationId,
-  userId,
-  currentStatus,
+  application, // 3. Use the imported type
 }: {
-  applicationId: string;
-  userId: string;
-  currentStatus: ApplicationStatus;
+  application: ApplicationWithUser;
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleApprove = () => {
     if (
@@ -29,7 +31,10 @@ export default function BloggerApplicationRowActions({
     }
     setError(null);
     startTransition(async () => {
-      const result = await approveBloggerApplication(applicationId, userId);
+      const result = await approveBloggerApplication(
+        application.id,
+        application.userId
+      );
       if (!result.success) {
         setError(result.message || 'Failed to approve application.');
       }
@@ -44,39 +49,53 @@ export default function BloggerApplicationRowActions({
     }
     setError(null);
     startTransition(async () => {
-      const result = await rejectBloggerApplication(applicationId);
+      const result = await rejectBloggerApplication(application.id);
       if (!result.success) {
         setError(result.message || 'Failed to reject application.');
       }
     });
   };
 
-  // Only show actions if the application is PENDING
-  if (currentStatus !== ApplicationStatus.PENDING) {
-    return (
-       <span className="text-xs text-gray-500 italic">
-        {currentStatus === ApplicationStatus.APPROVED ? 'Approved' : 'Rejected'}
-       </span>
-    );
-  }
-
   return (
-    <div className="space-x-2">
-      <button
-        onClick={handleApprove}
-        disabled={isPending}
-        className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-      >
-        {isPending ? '...' : 'Approve'}
-      </button>
-      <button
-        onClick={handleReject}
-        disabled={isPending}
-        className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-      >
-        {isPending ? '...' : 'Reject'}
-      </button>
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-    </div>
+    <>
+      <div className="flex items-center space-x-2 justify-end">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+        >
+          View Details
+        </button>
+
+        {application.status === ApplicationStatus.PENDING && (
+          <>
+            <button
+              onClick={handleApprove}
+              disabled={isPending}
+              className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+            >
+              {isPending ? '...' : 'Approve'}
+            </button>
+            <button
+              onClick={handleReject}
+              disabled={isPending}
+              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+            >
+              {isPending ? '...' : 'Reject'}
+            </button>
+          </>
+        )}
+      </div>
+
+      {error && (
+        <p className="text-red-500 text-xs mt-1 text-right">{error}</p>
+      )}
+
+      {isModalOpen && (
+        <BloggerApplicationModal
+          application={application}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
+    </>
   );
 }
