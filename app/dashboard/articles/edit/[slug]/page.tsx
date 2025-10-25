@@ -1,78 +1,94 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-// import { useSession } from 'next-auth/react'; // No longer needed
-import { useRouter, useParams } from 'next/navigation'; // 1. Import useParams
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import TiptapEditor from '@/components/editor/TiptapEditor';
 import { updateArticle, fetchArticleForEdit } from './actions';
-import { Article } from '@prisma/client';
+import { getCategories } from '@/app/admin/actions'; // Import category fetcher
+import type { Article, Category } from '@prisma/client'; // Import types
 
-// Removed EditPageProps type, as params are no longer passed via props
-// type EditPageProps = {
-//  params: { slug: string };
-// };
+// Define Props for the fetched article (includes categories)
+type ArticleWithCategories = Article & {
+  categories: { id: string }[];
+};
 
-// Removed params prop
 const EditArticlePage = () => {
-  // 2. Get params using the hook
   const params = useParams();
-  const currentSlug = params.slug as string; // Assert as string (or handle array if needed)
+  const currentSlug = params.slug as string;
   const router = useRouter();
 
   // --- State Definitions ---
-  const [article, setArticle] = useState<Article | null>(null);
+  const [article, setArticle] = useState<ArticleWithCategories | null>(null); // Use updated type
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [featuredImage, setFeaturedImage] = useState('');
+  
+  // --- New Category States ---
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  // --- End New Category States ---
 
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. Fetch Existing Article Data
+  // 1. Fetch Existing Article Data AND All Categories
   useEffect(() => {
-    // Ensure currentSlug is available before fetching
     if (!currentSlug) {
         setError('Article slug not found in URL.');
         setIsLoading(false);
         return;
     }
 
-    async function loadArticle() {
+    async function loadData() {
       setIsLoading(true);
-      setError(null); // Clear previous errors
+      setError(null);
+      
       try {
-        const fetchedArticle = await fetchArticleForEdit(currentSlug);
+        // Fetch article data and all categories in parallel
+        const [fetchedArticle, fetchedCategories] = await Promise.all([
+          fetchArticleForEdit(currentSlug), // This now returns article with category IDs
+          getCategories() // Fetches all categories
+        ]);
+
         if (!fetchedArticle) {
           setError('Article not found or you do not have permission to edit it.');
           setIsLoading(false);
-          // router.push('/dashboard?error=ArticleNotFound'); // Keep user on page to see error
           return;
         }
 
-        setArticle(fetchedArticle);
+        // Set state from fetched data
+        setArticle(fetchedArticle as ArticleWithCategories); // Cast to correct type
         setTitle(fetchedArticle.title);
         setSlug(fetchedArticle.slug);
         setExcerpt(fetchedArticle.excerpt || '');
         setFeaturedImage(fetchedArticle.featuredImage || '');
         setContent(fetchedArticle.content);
+        
+        // Set category states
+        setAllCategories(fetchedCategories);
+        // Pre-select the checkboxes for the article's current categories
+        setSelectedCategoryIds(fetchedArticle.categories.map(cat => cat.id));
+
+        setIsLoadingCategories(false);
 
       } catch (e: any) {
         setError(e.message || 'Failed to load article data.');
-        // router.push('/dashboard?error=LoadFailed');
       } finally {
         setIsLoading(false);
       }
     }
-    loadArticle();
-  }, [currentSlug, router]); // Depend on currentSlug from useParams
+    
+    loadData();
+  }, [currentSlug, router]); // Depend on currentSlug
 
 
-  // Helper functions remain the same
+  // Helper functions
   const generateSlug = (str: string) => { /* ... */
       return str
       .toLowerCase()
@@ -87,11 +103,18 @@ const EditArticlePage = () => {
   const handleContentChange = (newContent: string) => { /* ... */
       setContent(newContent);
    };
+   
+  // --- New Category Checkbox Handler ---
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategoryIds((prevSelected) =>
+      prevSelected.includes(categoryId)
+        ? prevSelected.filter((id) => id !== categoryId) // Uncheck
+        : [...prevSelected, categoryId] // Check
+    );
+  };
 
-   // --- FIX: Renamed function back to handleSave ---
+
   const handleSave = async (publish: boolean) => {
-    // --- END FIX ---
-    // No e.preventDefault() needed as buttons are type="button"
     setError(null);
     setSuccess(null);
 
@@ -108,6 +131,7 @@ const EditArticlePage = () => {
           excerpt: excerpt.trim() || null,
           featuredImage: featuredImage.trim() || null,
           published: publish,
+          categoryIds: selectedCategoryIds, // Pass the selected IDs
         });
 
         if (!result.success) { throw new Error(result.message || 'Failed to update article.'); }
@@ -124,14 +148,13 @@ const EditArticlePage = () => {
 
 
   // --- Loading/Error State ---
-  if (isLoading) { /* ... remains the same ... */
-      return (
+  if (isLoading || isLoadingCategories) { // Check both loading states
+    return (
       <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
         <p className="text-gray-500 text-lg animate-pulse">Loading article...</p>
       </div>
     );
   }
-  // Show error state more prominently
   if (error || !article) {
       return (
           <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center text-center">
@@ -147,10 +170,9 @@ const EditArticlePage = () => {
     <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
       <div className="max-w-4xl w-full mx-auto bg-white p-6 rounded-lg shadow-lg border border-gray-200">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">
-          Edit Article: {title} {/* Use state title for immediate feedback */}
+          Edit Article: {title}
         </h1>
 
-        {/* Removed onSubmit from form */}
         <form className="space-y-6">
           {/* Title */}
           <div>
@@ -177,22 +199,50 @@ const EditArticlePage = () => {
             <textarea id="excerpt" rows={3} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black" placeholder="A short summary for the article preview..."/>
           </div>
 
+          {/* --- START: Categories Selection (Populated) --- */}
+           <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categories</label>
+                {allCategories.length > 0 ? (
+                    <div className="mt-2 space-y-2 border border-gray-200 rounded-md p-4 max-h-40 overflow-y-auto">
+                        {allCategories.map((category) => (
+                            <div key={category.id} className="flex items-center">
+                                <input
+                                    id={`category-${category.id}`}
+                                    name="categories"
+                                    type="checkbox"
+                                    value={category.id}
+                                    // Use selectedCategoryIds to set checked state
+                                    checked={selectedCategoryIds.includes(category.id)}
+                                    onChange={() => handleCategoryChange(category.id)}
+                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <label htmlFor={`category-${category.id}`} className="ml-3 block text-sm text-gray-700">
+                                    {category.name}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-500 italic">No categories found. <Link href="/admin" className="text-blue-600 hover:underline">Create categories</Link> in the admin panel.</p>
+                )}
+           </div>
+           {/* --- END: Categories Selection (Populated) --- */}
+
 
           {/* Tiptap Editor */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Content <span className="text-red-500">*</span>
             </label>
-            {/* Pass key based on article ID and content length to help trigger re-render on load */}
              <TiptapEditor
-                key={article.id + (content?.length || 0)}
+                key={article.id} // Key ensures editor re-initializes if slug changes (though not ideal)
                 content={content}
                 onChange={handleContentChange}
             />
           </div>
 
           {/* Error/Success Messages */}
-          {error && !isLoading && <p className="text-red-600 text-sm">{error}</p>} {/* Hide error during initial load */}
+          {error && !isLoading && <p className="text-red-600 text-sm">{error}</p>}
           {success && <p className="text-green-600 text-sm">{success}</p>}
 
           {/* Action Buttons */}
@@ -201,16 +251,16 @@ const EditArticlePage = () => {
              <div className="flex justify-end gap-4">
                 <button
                 type="button"
-                onClick={() => handleSave(false)} // Call handleSave directly
-                disabled={isPending || isLoading} // Disable during load too
+                onClick={() => handleSave(false)}
+                disabled={isPending || isLoading}
                 className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                 >
                 {isPending ? 'Saving Draft...' : 'Save Draft'}
                 </button>
                 <button
                 type="button"
-                onClick={() => handleSave(true)} // Call handleSave directly
-                disabled={isPending || isLoading} // Disable during load too
+                onClick={() => handleSave(true)}
+                disabled={isPending || isLoading}
                 className="inline-flex justify-center py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                 >
                 {isPending ? 'Publishing...' : 'Update & Publish'}
@@ -221,6 +271,6 @@ const EditArticlePage = () => {
       </div>
     </div>
   );
-}; // End of component definition
+};
 
-export default EditArticlePage; // Export component
+export default EditArticlePage;
