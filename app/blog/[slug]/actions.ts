@@ -9,6 +9,8 @@ interface CommentResult {
   message?: string;
 }
 
+const MAX_COMMENT_LENGTH = 1000; // 1. Define your character limit
+
 export async function postComment(
   articleId: string,
   content: string
@@ -21,7 +23,7 @@ export async function postComment(
   }
   
   // 2. Check Authorization (canComment)
-  if (!session.user.canComment) {
+  if (!session.user.canComment) { 
       return { success: false, message: 'You are not permitted to comment.' };
   }
 
@@ -29,22 +31,25 @@ export async function postComment(
   if (!content || content.trim().length === 0) {
     return { success: false, message: 'Comment cannot be empty.' };
   }
-  if (content.length > 1000) { // Optional: Set a max length
-      return { success: false, message: 'Comment is too long (max 1000 characters).' };
+
+  // --- START: New Validation ---
+  // 4. Enforce Character Limit on Server
+  if (content.length > MAX_COMMENT_LENGTH) {
+      return { success: false, message: `Comment is too long (max ${MAX_COMMENT_LENGTH} characters).` };
   }
+  // --- END: New Validation ---
 
   try {
-    // 4. Create Comment
+    // 5. Create Comment
     await prisma.comment.create({
       data: {
-        content: content.trim(),
+        content: content.trim(), // Use the trimmed content
         authorId: session.user.id,
         articleId: articleId,
       },
     });
 
-    // 5. Revalidate the article page to show the new comment
-    // We need the article slug for this. Let's fetch it.
+    // 6. Revalidate Paths
     const article = await prisma.article.findUnique({
         where: { id: articleId },
         select: { slug: true }
@@ -53,9 +58,9 @@ export async function postComment(
     if (article) {
         revalidatePath(`/blog/${article.slug}`);
     }
-    revalidatePath('/dashboard'); // Revalidate dashboard (for recent comments)
+    revalidatePath('/dashboard');
 
-    return { success: true };
+    return { success: true, message: "Comment posted!" };
   } catch (error) {
     console.error('Error posting comment:', error);
     return { success: false, message: 'An internal error occurred.' };
