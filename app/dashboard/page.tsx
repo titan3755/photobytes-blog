@@ -1,10 +1,17 @@
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { Article, Role, ApplicationStatus } from '@prisma/client';
+import {
+  Article,
+  Role,
+  ApplicationStatus,
+  UserNotification, // Import notification types
+  Notification,
+} from '@prisma/client';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar';
-import UserArticleRow from '@/components/dashboard/UserArticleRow'; // 1. Import the new component
+import UserArticleRow from '@/components/dashboard/UserArticleRow';
+import NotificationItem from '@/components/dashboard/NotificationItem'; // 1. Import the new component
 
 // --- Reusable Card Component ---
 function DashboardCard({
@@ -26,9 +33,6 @@ function DashboardCard({
     </div>
   );
 }
-
-// --- REMOVED UserArticleRow function from here ---
-
 
 // Helper for status badges in dashboard
 function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
@@ -78,7 +82,22 @@ export default async function Dashboard() {
   const userRole = session.user.role;
   const canPostArticles = userRole === Role.ADMIN || userRole === Role.BLOGGER;
 
-  // --- Fetch Data ---
+  // --- 2. Fetch Notifications ---
+  const userNotifications = await prisma.userNotification.findMany({
+    where: { userId: userId },
+    include: {
+      notification: true, // Include the actual notification details
+    },
+    orderBy: {
+      notification: { createdAt: 'desc' }, // Order by when the notification was created
+    },
+    take: 20, // Limit to recent 20
+  });
+
+  // Calculate unread count
+  const unreadCount = userNotifications.filter((n) => !n.isRead).length;
+
+  // --- Fetch Other Data ---
   let userArticles: Article[] = [];
   if (canPostArticles) {
     userArticles = await prisma.article.findMany({
@@ -101,16 +120,39 @@ export default async function Dashboard() {
   return (
     // Applied the UI workaround classes here
     <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
-      <div className="max-w-4xl w-full mx-auto space-y-8"> {/* Added w-full */}
+      <div className="max-w-4xl w-full mx-auto space-y-8">
         {/* Welcome Header */}
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-6">
-          Welcome, {session.user.username || session.user.name}!
-        </h1>
+        {/* 3. Wrap Header in flex for bell icon */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-4xl font-extrabold text-gray-900">
+            Welcome, {session.user.username || session.user.name}!
+          </h1>
+          {/* 4. Add Notification Bell Icon */}
+          <div className="relative">
+            <svg
+              className="h-8 w-8 text-gray-500 hover:text-gray-700"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341A6.002 6.002 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              />
+            </svg>
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                {unreadCount}
+              </span>
+            )}
+          </div>
+        </div>
 
         {/* Admin Panel Link (Conditional) */}
         {userRole === Role.ADMIN && (
-          // ... (Admin link section remains the same) ...
-           <div className="mb-6 p-4 bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-300 rounded-lg shadow-sm text-center">
+          <div className="mb-0 p-4 bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-300 rounded-lg shadow-sm text-center">
             <Link
               href="/admin"
               className="font-bold text-lg text-indigo-700 hover:text-indigo-900 transition-colors"
@@ -120,11 +162,31 @@ export default async function Dashboard() {
           </div>
         )}
 
+        {/* --- 5. Add Notification Card --- */}
+        <DashboardCard title="Your Notifications" className="md:col-span-2">
+          {userNotifications.length > 0 ? (
+            <ul className="space-y-3 max-h-96 overflow-y-auto pr-2">
+              {userNotifications.map((item) => (
+                <NotificationItem
+                  key={item.id}
+                  item={item as UserNotification & { notification: Notification }} // Type assertion
+                />
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500 text-center py-4">
+              You have no new notifications.
+            </p>
+          )}
+        </DashboardCard>
+        {/* --- End Notification Card --- */}
+
+
         {/* Grid Layout for Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* --- Profile Information Card --- */}
           <DashboardCard title="Your Profile" className="md:col-span-1">
-            {/* Start: Use the UserProfileAvatar component */}
+            {/* ... (Profile Card remains the same) ... */}
             <div className="flex items-center space-x-4 mb-6 pb-6 border-b border-gray-200">
               <UserProfileAvatar
                 src={session.user.image}
@@ -140,10 +202,7 @@ export default async function Dashboard() {
                 </p>
               </div>
             </div>
-            {/* End: Use the UserProfileAvatar component */}
-
             <div className="space-y-3 text-gray-700">
-              {/* Profile details remain the same */}
               <p>
                 <span className="font-semibold">Username:</span>{' '}
                 {session.user.username || 'Not Set'}
@@ -197,6 +256,7 @@ export default async function Dashboard() {
             title="Your Articles"
             className="col-span-1 md:col-span-2"
           >
+             {/* ... (Remains the same) ... */}
               <div className="flex justify-end mb-4">
               <Link
                 href="/dashboard/articles/new"
@@ -208,7 +268,6 @@ export default async function Dashboard() {
             {userArticles.length > 0 ? (
               <ul className="space-y-3">
                 {userArticles.map((article) => (
-                   // 2. Use the imported UserArticleRow component
                   <UserArticleRow key={article.id} article={article} />
                 ))}
               </ul>
@@ -228,10 +287,8 @@ export default async function Dashboard() {
           >
              {/* ... (Remains the same) ... */}
              {applicationStatus ? (
-              // If application exists, show status
               <ApplicationStatusDisplay status={applicationStatus} />
             ) : (
-              // If no application, show the apply button
               <>
                 <p className="text-gray-700 mb-6">
                   Interested in sharing your insights on technology, photography,

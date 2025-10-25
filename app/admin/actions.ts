@@ -5,8 +5,86 @@ import prisma from '@/lib/prisma';
 import { Role, ApplicationStatus } from '@prisma/client';
 import { auth } from '@/auth';
 
+// --- Category Actions ---
+// ... (createCategory, deleteCategory) ...
+export async function createCategory(data: { name: string, slug: string }) {
+    const session = await auth();
+    if (session?.user?.role !== 'ADMIN') {
+        return { success: false, message: 'Not authorized.' };
+    }
+
+    const { name, slug } = data;
+    if (!name || !slug) {
+        return { success: false, message: 'Name and slug are required.' };
+    }
+
+    try {
+        const existingCategory = await prisma.category.findFirst({
+            where: { OR: [{ name: name }, { slug: slug }] }
+        });
+        if (existingCategory) {
+            return { success: false, message: 'Category name or slug already exists.' };
+        }
+
+        await prisma.category.create({
+            data: {
+                name: name,
+                slug: slug,
+            }
+        });
+
+        revalidatePath('/admin');
+        revalidatePath('/dashboard/articles/new');
+        return { success: true };
+
+    } catch (error) {
+        console.error('Error creating category:', error);
+        return { success: false, message: 'An internal error occurred.' };
+    }
+}
+
+export async function deleteCategory(categoryId: string) {
+    const session = await auth();
+    if (session?.user?.role !== 'ADMIN') {
+        return { success: false, message: 'Not authorized.' };
+    }
+
+    try {
+        await prisma.category.delete({
+            where: { id: categoryId },
+        });
+
+        revalidatePath('/admin');
+        revalidatePath('/dashboard/articles/new');
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting category:', error);
+        if (error instanceof Error && (error as any).code === 'P2003') {
+             return { success: false, message: 'Cannot delete category. Please ensure no articles are using it.' };
+        }
+        return { success: false, message: 'Failed to delete category.' };
+    }
+}
+
+export async function getCategories() {
+    const session = await auth();
+    if (!session?.user?.id) { 
+        throw new Error('Not authenticated.');
+    }
+
+    try {
+        const categories = await prisma.category.findMany({
+            orderBy: { name: 'asc' },
+        });
+        return categories;
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+    }
+}
+
 // --- User Actions ---
-// ... (updateUserRole, deleteUser remain the same) ...
+// ... (updateUserRole, deleteUser) ...
 export async function updateUserRole(userId: string, newRole: Role) {
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') {
@@ -50,7 +128,7 @@ export async function deleteUser(userId: string) {
 
 
 // --- Contact Message Actions ---
-// ... (markContactMessageRead, deleteContactMessage remain the same) ...
+// ... (markContactMessageRead, deleteContactMessage) ...
 export async function markContactMessageRead(
   messageId: string,
   isRead: boolean
@@ -90,7 +168,7 @@ export async function deleteContactMessage(messageId: string) {
 }
 
 // --- Blogger Application Actions ---
-// ... (approveBloggerApplication, rejectBloggerApplication remain the same) ...
+// ... (approveBloggerApplication, rejectBloggerApplication) ...
 export async function approveBloggerApplication(
   applicationId: string,
   userId: string
@@ -141,7 +219,7 @@ export async function rejectBloggerApplication(applicationId: string) {
 
 
 // --- Article Action ---
-// ... (deleteArticle remains the same) ...
+// ... (deleteArticle) ...
 export async function deleteArticle(articleId: string) {
     const session = await auth();
     if (!session?.user?.id) {
@@ -182,87 +260,122 @@ export async function deleteArticle(articleId: string) {
     }
 }
 
-// --- START: New Category Actions ---
-export async function createCategory(data: { name: string, slug: string }) {
+// --- START: New Notification Actions ---
+
+type TargetAudience = 'ALL_USERS' | 'ALL_BLOGGERS' | 'ALL_ADMINS' | { userId: string };
+
+interface SendNotificationData {
+    title: string;
+    description: string;
+    url?: string | null;
+    target: TargetAudience;
+}
+
+export async function sendNotification(data: SendNotificationData): Promise<{ success: boolean; message: string }> {
     const session = await auth();
     if (session?.user?.role !== 'ADMIN') {
         return { success: false, message: 'Not authorized.' };
     }
 
-    const { name, slug } = data;
-    if (!name || !slug) {
-        return { success: false, message: 'Name and slug are required.' };
+    const { title, description, url, target } = data;
+
+    if (!title || !description) {
+        return { success: false, message: 'Title and description are required.' };
     }
 
     try {
-        // Check if slug is unique
-        const existingCategory = await prisma.category.findFirst({
-            where: { OR: [{ name: name }, { slug: slug }] }
+        // 1. Create the base notification
+        const newNotification = await prisma.notification.create({
+            data: {
+                title,
+                description,
+                url: url || null,
+            },
         });
-        if (existingCategory) {
-            return { success: false, message: 'Category name or slug already exists.' };
+
+        // 2. Find the target user IDs
+        let targetUserIds: { id: string }[] = [];
+
+        if (target === 'ALL_USERS') {
+            targetUserIds = await prisma.user.findMany({ select: { id: true } });
+        } else if (target === 'ALL_BLOGGERS') {
+            targetUserIds = await prisma.user.findMany({ where: { role: Role.BLOGGER }, select: { id: true } });
+        } else if (target === 'ALL_ADMINS') {
+            targetUserIds = await prisma.user.findMany({ where: { role: Role.ADMIN }, select: { id: true } });
+        } else if (typeof target === 'object' && target.userId) {
+            // Check if user exists (optional, but good practice)
+            const userExists = await prisma.user.findUnique({ where: { id: target.userId }, select: { id: true }});
+            if (userExists) {
+                targetUserIds = [{ id: userExists.id }];
+            } else {
+                // If user doesn't exist, delete the orphaned notification
+                await prisma.notification.delete({ where: { id: newNotification.id } });
+                return { success: false, message: `User with ID ${target.userId} not found.` };
+            }
         }
 
-        await prisma.category.create({
-            data: {
-                name: name,
-                slug: slug,
-            }
-        });
+        if (targetUserIds.length === 0) {
+             await prisma.notification.delete({ where: { id: newNotification.id } });
+             return { success: false, message: 'No target users found for this notification.' };
+        }
 
+        // 3. Create the links in the UserNotification table
+        await prisma.userNotification.createMany({
+            data: targetUserIds.map(user => ({
+                userId: user.id,
+                notificationId: newNotification.id,
+            })),
+            skipDuplicates: true, // Just in case
+        });
+        
+        // 4. Revalidate admin path (to clear form) and relevant dashboards
         revalidatePath('/admin');
-        revalidatePath('/dashboard/articles/new'); // Revalidate new article page to show new category
-        return { success: true };
+        // We can't revalidate /dashboard for all users, client-side fetching is better
+        // but we'll revalidate the admin's path as a signal.
+
+        return { success: true, message: `Notification sent to ${targetUserIds.length} user(s).` };
 
     } catch (error) {
-        console.error('Error creating category:', error);
+        console.error('Error sending notification:', error);
         return { success: false, message: 'An internal error occurred.' };
     }
 }
 
-export async function deleteCategory(categoryId: string) {
+export async function markNotificationAsRead(userNotificationId: string): Promise<{ success: boolean; message?: string }> {
     const session = await auth();
-    if (session?.user?.role !== 'ADMIN') {
-        return { success: false, message: 'Not authorized.' };
+    if (!session?.user?.id) {
+         return { success: false, message: 'Not authenticated.' };
     }
+    const userId = session.user.id;
 
     try {
-        // Prisma's default behavior for many-to-many relations is to just remove
-        // the entries from the join table, which is what we want.
-        // If this fails due to a relation issue, we'd need to disconnect articles first.
-        await prisma.category.delete({
-            where: { id: categoryId },
+        // Find the notification to ensure the user owns it
+        const notificationLink = await prisma.userNotification.findUnique({
+            where: { id: userNotificationId },
+            select: { userId: true }
         });
 
-        revalidatePath('/admin');
-        revalidatePath('/dashboard/articles/new'); // Revalidate new article page
-        return { success: true };
-    } catch (error) {
-        console.error('Error deleting category:', error);
-        // Provide a more helpful error if it's a foreign key constraint
-        if (error instanceof Error && (error as any).code === 'P2003') { // Prisma foreign key constraint fail
-             return { success: false, message: 'Cannot delete category. Please ensure no articles are using it.' };
+        if (!notificationLink) {
+             return { success: false, message: 'Notification not found.' };
         }
-        return { success: false, message: 'Failed to delete category.' };
-    }
-}
+        
+        if (notificationLink.userId !== userId) {
+            return { success: false, message: 'Not authorized.' };
+        }
 
-export async function getCategories() {
-    const session = await auth();
-    // Allow any logged-in user to *see* categories for posting
-    if (!session?.user?.id) { 
-        throw new Error('Not authenticated.');
-    }
-
-    try {
-        const categories = await prisma.category.findMany({
-            orderBy: { name: 'asc' },
+        // Mark as read
+        await prisma.userNotification.update({
+            where: { id: userNotificationId },
+            data: { isRead: true }
         });
-        return categories;
+
+        revalidatePath('/dashboard'); // Revalidate the user's dashboard
+        return { success: true };
+
     } catch (error) {
-        console.error('Error fetching categories:', error);
-        return []; // Return empty on error
+        console.error('Error marking notification as read:', error);
+        return { success: false, message: 'An internal error occurred.' };
     }
 }
-// --- END: New Category Actions ---
+// --- END: New Notification Actions ---
 

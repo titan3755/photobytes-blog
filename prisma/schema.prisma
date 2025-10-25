@@ -33,6 +33,7 @@ model User {
   sessions      Session[]
   articles      Article[]
   bloggerApplication BloggerApplication?
+  userNotifications  UserNotification[]
 }
 
 model Account {
@@ -110,3 +111,34 @@ model BloggerApplication {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// --- START: New Notification Models ---
+
+// The notification message itself
+model Notification {
+  id                String             @id @default(cuid())
+  title             String
+  description       String
+  url               String? // Optional link (e.g., /blog/new-feature)
+  createdAt         DateTime           @default(now())
+  
+  // Relation to all users who received this
+  userNotifications UserNotification[]
+}
+
+// Join table to link notifications to users and track read status
+model UserNotification {
+  id             String       @id @default(cuid())
+  isRead         Boolean      @default(false)
+
+  // Relation to User
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relation to Notification
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationId]) // A user can only receive the same notification once
+}
+// --- END: New Notification Models ---
