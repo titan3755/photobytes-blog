@@ -10,11 +10,12 @@ import { NextResponse } from 'next/server';
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
+  // session: { strategy: "jwt" }, // This was correctly removed
   providers: [
     ...authConfig.providers, // Google and Facebook
     CredentialsProvider({
-      // ... (CredentialsProvider config remains the same) ...
       async authorize(credentials) {
+        // ... (your authorize logic remains the same)
         const { email, username, password } = credentials;
         if (typeof password !== 'string') return null;
 
@@ -35,98 +36,84 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    // --- START FIX: Changed if(user) to if(user?.id) ---
     async jwt({ token, user }) {
-      if (user?.id) {
-        // Initial sign-in
-        token.id = user.id;
+      // Check for user AND user.id
+      if (user?.id) { // 'user' is only available on sign-in and has a defined id
+        token.id = user.id; // Now this is type-safe
         // @ts-ignore
         token.role = user.role;
         // @ts-ignore
         token.username = user.username;
-        token.name = user.name;
-        token.email = user.email;
-        token.picture = user.image;
+        // @ts-ignore
+        token.canComment = user.canComment;
         // @ts-ignore
         token.createdAt = user.createdAt;
-        // @ts-ignore
-        token.canComment = user.canComment; // 1. Add canComment on sign-in
-      } else if (token.id) {
-        // Subsequent requests - refresh data
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { // Select only necessary fields
-            role: true,
-            username: true,
-            name: true,
-            email: true,
-            image: true,
-            createdAt: true,
-            canComment: true, // 2. Refresh canComment
-          }
-        });
-        if (dbUser) {
-          token.role = dbUser.role;
-          token.username = dbUser.username;
-          token.name = dbUser.name;
-          token.email = dbUser.email;
-          token.picture = dbUser.image;
-          token.createdAt = dbUser.createdAt;
-          token.canComment = dbUser.canComment; // 3. Assign refreshed value
-        }
       }
       return token;
     },
-    async session({ session, token }) {
-      if (session.user) {
-        // Add all properties from token to session
-        if (token.id) session.user.id = token.id as string;
-        if (token.role) session.user.role = token.role as Role;
-        if (token.username) session.user.username = token.username as string;
-        if (token.name) session.user.name = token.name;
-        if (token.email) session.user.email = token.email;
-        if (token.picture) session.user.image = token.picture;
-        if (token.createdAt) session.user.createdAt = token.createdAt;
-        session.user.canComment = token.canComment as boolean; // 4. Add to session
+    // --- END FIX ---
+    
+    // Session callback is now the main source of truth for the session object
+    // It receives the 'user' object from the database session
+    async session({ session, user, token }) {
+      if (user && session.user) {
+        session.user.id = user.id;
+        session.user.role = user.role;
+        session.user.username = user.username;
+        session.user.canComment = user.canComment;
+        session.user.createdAt = user.createdAt;
+        // name, email, and image are already handled by default
+      } else if (token && session.user) {
+         // Fallback for cases where token is still used (less common with db strategy)
+         session.user.id = token.id as string;
+         session.user.role = token.role as Role;
+         session.user.username = token.username as string | null;
+         session.user.canComment = token.canComment as boolean;
+         session.user.createdAt = token.createdAt as Date | string | null;
       }
       return session;
     },
-    // Authorized callback remains the same
-    authorized({ auth, request }) {
-        // ... your existing authorized logic ...
-        const { nextUrl } = request;
-        const pathname = nextUrl.pathname;
-        const isLoggedIn = !!auth?.user;
-        const userRole = auth?.user?.role;
-        const isAdmin = userRole === 'ADMIN';
-        const isBlogger = userRole === 'BLOGGER';
 
-        if (pathname.startsWith('/login') || pathname.startsWith('/register')) {
-            if (isLoggedIn) {
-            return NextResponse.redirect(new URL('/dashboard', nextUrl));
-            }
-            return true;
-        }
-        if (pathname.startsWith('/forbidden')) return true;
-        if (pathname.startsWith('/admin')) {
-            if (!isLoggedIn) return false;
-            if (!isAdmin)
-            return NextResponse.redirect(new URL('/forbidden', nextUrl));
-            return true;
-        }
-        if (pathname.startsWith('/dashboard/articles')) {
-            if (!isLoggedIn) return false;
-            if (!isAdmin && !isBlogger)
-            return NextResponse.redirect(new URL('/forbidden', nextUrl));
-            return true;
-        }
-        if (
-            pathname.startsWith('/dashboard') ||
-            pathname.startsWith('/profile')
-        ) {
-            if (!isLoggedIn) return false;
-            return true;
+    // Authorized callback now correctly receives the session from the DB
+    authorized({ auth, request }) {
+      const { nextUrl } = request;
+      const pathname = nextUrl.pathname;
+      const isLoggedIn = !!auth?.user;
+      const userRole = auth?.user?.role;
+      const isAdmin = userRole === 'ADMIN';
+      const isBlogger = userRole === 'BLOGGER';
+
+      if (pathname.startsWith('/login') || pathname.startsWith('/register')) {
+        if (isLoggedIn) {
+          return NextResponse.redirect(new URL('/dashboard', nextUrl));
         }
         return true;
+      }
+      if (pathname.startsWith('/forbidden')) return true;
+      
+      // Protect /admin AND /dev routes
+      if (pathname.startsWith('/admin') || pathname.startsWith('/dev')) {
+        if (!isLoggedIn) return false;
+        if (!isAdmin)
+          return NextResponse.redirect(new URL('/forbidden', nextUrl));
+        return true;
+      }
+      
+      if (pathname.startsWith('/dashboard/articles')) {
+        if (!isLoggedIn) return false;
+        if (!isAdmin && !isBlogger)
+          return NextResponse.redirect(new URL('/forbidden', nextUrl));
+        return true;
+      }
+      if (
+        pathname.startsWith('/dashboard') ||
+        pathname.startsWith('/profile')
+      ) {
+        if (!isLoggedIn) return false;
+        return true;
+      }
+      return true;
     },
   },
 });
