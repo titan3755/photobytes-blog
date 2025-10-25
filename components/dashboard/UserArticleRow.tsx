@@ -1,25 +1,25 @@
-'use client'; // Mark as Client Component
+'use client';
 
 import { Article } from '@prisma/client';
 import Link from 'next/link';
-import { useState } from 'react'; // Import useState for error handling
+import { useState } from 'react';
+import DeleteArticleButton from './DeleteArticleButton'; // 1. Import the new component
 
 export default function UserArticleRow({ article }: { article: Article }) {
-    const [imageError, setImageError] = useState(false); // State for image error
+    const [imageError, setImageError] = useState(false);
 
     return (
         <li className="flex items-center justify-between py-4 border-b border-gray-200 last:border-b-0 gap-4">
             {/* Image Thumbnail */}
             <div className="flex-shrink-0 w-16 h-12 bg-gray-200 rounded overflow-hidden">
-                {article.featuredImage && !imageError ? ( // Check error state
+                {article.featuredImage && !imageError ? (
                     <img
                         src={article.featuredImage}
                         alt={`Featured image for ${article.title}`}
                         className="w-full h-full object-cover"
-                        onError={() => setImageError(true)} // Set error state on failure
+                        onError={() => setImageError(true)}
                     />
                 ) : (
-                    // Show placeholder if no image or if error occurred
                     <div className="w-full h-full flex items-center justify-center">
                         <span className="text-xs text-gray-400">No Img</span>
                     </div>
@@ -64,12 +64,8 @@ export default function UserArticleRow({ article }: { article: Article }) {
                 >
                     Edit
                 </Link>
-                <Link
-                    href={`/dashboard/articles/delete/${article.slug}`}
-                    className="px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-md hover:bg-red-600 transition-colors"
-                >
-                    Delete
-                </Link>
+                {/* 2. Replace Link with DeleteArticleButton */}
+                <DeleteArticleButton articleId={article.id} articleTitle={article.title} />
             </div>
         </li>
     );

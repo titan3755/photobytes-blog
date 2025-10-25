@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import type { Metadata, ResolvingMetadata } from 'next';
-import FeaturedImage from '@/components/blog/FeaturedImage'; // 1. Import the new component
+import FeaturedImage from '@/components/blog/FeaturedImage'; // Assuming this path is correct
 
 type Props = {
   params: { slug: string };
@@ -96,10 +96,12 @@ export default async function ArticlePage({ params }: Props) {
         <FeaturedImage src={article.featuredImage} alt={article.title} />
 
         {/* Article Content */}
+        {/* --- START FIX: Explicitly target code within pre for text color --- */}
         <div
-          className="prose prose-lg lg:prose-xl max-w-none text-gray-800 prose-headings:font-bold prose-a:text-blue-600 hover:prose-a:underline prose-img:rounded-md prose-img:shadow-sm prose-blockquote:border-l-blue-500 prose-blockquote:text-gray-600 prose-code:bg-gray-100 prose-code:p-1 prose-code:rounded prose-code:text-sm"
+          className="prose prose-lg lg:prose-xl max-w-none text-gray-800 prose-headings:font-bold prose-a:text-blue-600 hover:prose-a:underline prose-img:rounded-md prose-img:shadow-sm prose-blockquote:border-l-blue-500 prose-blockquote:text-gray-600 prose-code:rounded prose-code:text-sm prose-pre:bg-gray-100 prose-pre:p-4 prose-pre:rounded-md prose-pre:text-gray-900 prose-pre:prose-code:!text-gray-900" // Force code inside pre to be dark
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
+        {/* --- END FIX --- */}
 
       </article>
     </div>

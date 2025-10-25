@@ -1,22 +1,23 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+// import { useSession } from 'next-auth/react'; // No longer needed
+import { useRouter, useParams } from 'next/navigation'; // 1. Import useParams
 import Link from 'next/link';
 import TiptapEditor from '@/components/editor/TiptapEditor';
 import { updateArticle, fetchArticleForEdit } from './actions';
 import { Article } from '@prisma/client';
 
-// Define Props inline or as a separate type definition
-type EditPageProps = {
-  params: { slug: string };
-};
+// Removed EditPageProps type, as params are no longer passed via props
+// type EditPageProps = {
+//  params: { slug: string };
+// };
 
-const EditArticlePage = ({ params }: EditPageProps) => { // Use const definition
-  // --- FIX: Access slug directly within the function body ---
-  const currentSlug = params.slug; 
-  // --- END FIX ---
+// Removed params prop
+const EditArticlePage = () => {
+  // 2. Get params using the hook
+  const params = useParams();
+  const currentSlug = params.slug as string; // Assert as string (or handle array if needed)
   const router = useRouter();
 
   // --- State Definitions ---
@@ -34,13 +35,22 @@ const EditArticlePage = ({ params }: EditPageProps) => { // Use const definition
 
   // 1. Fetch Existing Article Data
   useEffect(() => {
+    // Ensure currentSlug is available before fetching
+    if (!currentSlug) {
+        setError('Article slug not found in URL.');
+        setIsLoading(false);
+        return;
+    }
+
     async function loadArticle() {
       setIsLoading(true);
+      setError(null); // Clear previous errors
       try {
-        // Use the local currentSlug variable
-        const fetchedArticle = await fetchArticleForEdit(currentSlug); 
+        const fetchedArticle = await fetchArticleForEdit(currentSlug);
         if (!fetchedArticle) {
-          router.push('/dashboard?error=ArticleNotFound');
+          setError('Article not found or you do not have permission to edit it.');
+          setIsLoading(false);
+          // router.push('/dashboard?error=ArticleNotFound'); // Keep user on page to see error
           return;
         }
 
@@ -53,49 +63,45 @@ const EditArticlePage = ({ params }: EditPageProps) => { // Use const definition
 
       } catch (e: any) {
         setError(e.message || 'Failed to load article data.');
-        router.push('/dashboard?error=LoadFailed');
+        // router.push('/dashboard?error=LoadFailed');
       } finally {
         setIsLoading(false);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSlug, router]); // Depend on currentSlug
+    loadArticle();
+  }, [currentSlug, router]); // Depend on currentSlug from useParams
 
 
-  // Helper functions (same as new page)
-  const generateSlug = (str: string) => {
-    return str
+  // Helper functions remain the same
+  const generateSlug = (str: string) => { /* ... */
+      return str
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/[\s-]+/g, '-');
-  };
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTitle = e.target.value;
+   };
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => { /* ... */
+      const newTitle = e.target.value;
     setTitle(newTitle);
-    // Optional: Only update slug if the user hasn't modified it manually
-    // setSlug(generateSlug(newTitle));
-  };
+   };
+  const handleContentChange = (newContent: string) => { /* ... */
+      setContent(newContent);
+   };
 
-  const handleContentChange = (newContent: string) => {
-    setContent(newContent);
-  };
-
-  const handleSubmit = async (e: React.FormEvent, publish: boolean) => { // Added event 'e'
-    e.preventDefault(); // Prevent default form submission
+   // --- FIX: Renamed function back to handleSave ---
+  const handleSave = async (publish: boolean) => {
+    // --- END FIX ---
+    // No e.preventDefault() needed as buttons are type="button"
     setError(null);
     setSuccess(null);
 
-    if (!title || !slug || !content) {
-      setError('Title, Slug, and Content are required.');
-      return;
-    }
+    if (!article) { setError("Cannot save, article data is missing."); return; }
+    if (!title || !slug || !content) { setError('Title, Slug, and Content are required.'); return; }
 
     startTransition(async () => {
       try {
         const result = await updateArticle({
-          articleId: article!.id, // Use the non-null assertion operator (!)
+          articleId: article.id,
           title: title.trim(),
           slug: slug.trim(),
           content: content,
@@ -104,9 +110,7 @@ const EditArticlePage = ({ params }: EditPageProps) => { // Use const definition
           published: publish,
         });
 
-        if (!result.success) {
-          throw new Error(result.message || 'Failed to update article.');
-        }
+        if (!result.success) { throw new Error(result.message || 'Failed to update article.'); }
 
         setSuccess(`Article updated successfully!`);
         setTimeout(() => router.push('/dashboard'), 1500);
@@ -120,32 +124,34 @@ const EditArticlePage = ({ params }: EditPageProps) => { // Use const definition
 
 
   // --- Loading/Error State ---
-  if (isLoading) {
-    return (
+  if (isLoading) { /* ... remains the same ... */
+      return (
       <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
         <p className="text-gray-500 text-lg animate-pulse">Loading article...</p>
       </div>
     );
   }
-
-  if (!article || error) {
+  // Show error state more prominently
+  if (error || !article) {
       return (
-          <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
-              <p className="text-red-500 text-lg">Error: {error || 'Article not found or unauthorized.'}</p>
-              <Link href="/dashboard" className="mt-4 text-blue-600 hover:underline">&larr; Go to Dashboard</Link>
+          <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center text-center">
+              <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Article</h2>
+              <p className="text-red-500 mb-6">{error || 'Article could not be loaded or you are not authorized.'}</p>
+              <Link href="/dashboard" className="mt-4 text-blue-600 hover:underline">&larr; Go back to Dashboard</Link>
           </div>
       );
   }
 
+  // --- Main Return ---
   return (
     <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
       <div className="max-w-4xl w-full mx-auto bg-white p-6 rounded-lg shadow-lg border border-gray-200">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">
-          Edit Article: {article.title}
+          Edit Article: {title} {/* Use state title for immediate feedback */}
         </h1>
 
-        {/* --- FIX: Use anonymous function to call handleSubmit --- */}
-        <form onSubmit={(e) => handleSubmit(e, article!.published)} className="space-y-6"> 
+        {/* Removed onSubmit from form */}
+        <form className="space-y-6">
           {/* Title */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700"> Title <span className="text-red-500">*</span> </label>
@@ -177,14 +183,16 @@ const EditArticlePage = ({ params }: EditPageProps) => { // Use const definition
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Content <span className="text-red-500">*</span>
             </label>
-            <TiptapEditor 
+            {/* Pass key based on article ID and content length to help trigger re-render on load */}
+             <TiptapEditor
+                key={article.id + (content?.length || 0)}
                 content={content}
-                onChange={handleContentChange} 
+                onChange={handleContentChange}
             />
           </div>
 
           {/* Error/Success Messages */}
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {error && !isLoading && <p className="text-red-600 text-sm">{error}</p>} {/* Hide error during initial load */}
           {success && <p className="text-green-600 text-sm">{success}</p>}
 
           {/* Action Buttons */}
@@ -193,18 +201,16 @@ const EditArticlePage = ({ params }: EditPageProps) => { // Use const definition
              <div className="flex justify-end gap-4">
                 <button
                 type="button"
-                // Save Draft: Submits the form with published: false
-                onClick={(e) => handleSubmit(e, false)} 
-                disabled={isPending}
+                onClick={() => handleSave(false)} // Call handleSave directly
+                disabled={isPending || isLoading} // Disable during load too
                 className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                 >
                 {isPending ? 'Saving Draft...' : 'Save Draft'}
                 </button>
                 <button
                 type="button"
-                // Update & Publish: Submits the form with published: true
-                onClick={(e) => handleSubmit(e, true)} 
-                disabled={isPending}
+                onClick={() => handleSave(true)} // Call handleSave directly
+                disabled={isPending || isLoading} // Disable during load too
                 className="inline-flex justify-center py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                 >
                 {isPending ? 'Publishing...' : 'Update & Publish'}
@@ -215,6 +221,6 @@ const EditArticlePage = ({ params }: EditPageProps) => { // Use const definition
       </div>
     </div>
   );
-}
+}; // End of component definition
 
-export default EditArticlePage;
+export default EditArticlePage; // Export component
