@@ -38,7 +38,11 @@ export default function UserProfileAvatar({ src, alt, name }: UserProfileAvatarP
             width={64}
             height={64}
             className="rounded-full object-cover border-2 border-gray-300 h-16 w-16"
+            // --- START FIX: Add referrerPolicy ---
+            referrerPolicy="no-referrer"
+            // --- END FIX ---
             onError={() => setImageError(true)} // Set error state if image fails
         />
     );
 }
+

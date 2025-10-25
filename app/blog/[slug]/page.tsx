@@ -1,15 +1,15 @@
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import type { Metadata, ResolvingMetadata } from 'next';
-import FeaturedImage from '@/components/blog/FeaturedImage';
+import FeaturedImage from '@/components/blog/FeaturedImage'; // Assuming this path is correct
 import Link from 'next/link';
-import CommentsSection from '@/components/blog/CommentsSection'; // 1. Import new component
+import CommentsSection from '@/components/blog/CommentsSection'; // Import new component
 
 type Props = {
   params: { slug: string };
 };
 
-// ... (generateMetadata function remains the same) ...
+// Generate metadata dynamically for SEO
 export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
@@ -57,7 +57,7 @@ export async function generateMetadata(
   return metadata;
 }
 
-
+// The main page component
 export default async function ArticlePage({ params }: Props) {
   const slug = params.slug;
 
@@ -81,12 +81,14 @@ export default async function ArticlePage({ params }: Props) {
   }
 
   return (
+    // Applied workaround classes (using bg-white and adjusted padding)
     <div className="min-h-screen w-full bg-white min-w-screen flex flex-col items-center justify-center py-16 px-4 sm:px-6 lg:px-8">
+      {/* Added w-full to the article container */}
       <article className="max-w-3xl w-full mx-auto">
+
         {/* Article Header */}
         <header className="mb-8 border-b border-gray-200 pb-6">
-          {/* ... (Categories, Title, Author info remains the same) ... */}
-           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 leading-tight">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 leading-tight">
             {article.title}
           </h1>
           {article.categories && article.categories.length > 0 && (
@@ -118,7 +120,7 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         </header>
 
-        {/* Featured Image */}
+        {/* Featured Image (Optional) - Using Client Component */}
         <FeaturedImage src={article.featuredImage} alt={article.title} />
 
         {/* Article Content */}
@@ -127,12 +129,23 @@ export default async function ArticlePage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
-        {/* --- 2. Add Comments Section --- */}
-        <CommentsSection articleId={article.id} />
-        {/* --- End Comments Section --- */}
+        {/* --- START FIX: Pass articleSlug prop --- */}
+        <CommentsSection articleId={article.id} articleSlug={article.slug} />
+        {/* --- END FIX --- */}
 
       </article>
     </div>
   );
 }
+
+// Optional: Generate Static Paths (uncomment if needed)
+/*
+export async function generateStaticParams() {
+  const articles = await prisma.article.findMany({
+    where: { published: true },
+    select: { slug: true },
+  });
+  return articles.map((article) => ({ slug: article.slug }));
+}
+*/
 
