@@ -155,7 +155,7 @@ const EditArticlePage = ({ params }: EditPageProps) => { // Use const definition
           {/* Slug (Editable) */}
           <div>
             <label htmlFor="slug" className="block text-sm font-medium text-gray-700"> Slug (URL) <span className="text-red-500">*</span> </label>
-            <input type="text" id="slug" value={slug} onChange={(e) => setSlug(generateSlug(e.target.value))} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:ring-blue-500 text-black bg-gray-50"/>
+            <input type="text" id="slug" value={slug} onChange={(e) => setSlug(generateSlug(e.target.value))} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 text-black bg-gray-50"/>
             <p className="mt-1 text-xs text-gray-500">Must be unique.</p>
           </div>
 
