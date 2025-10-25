@@ -6,7 +6,7 @@ import {
   ApplicationStatus,
   UserNotification,
   Notification,
-  Comment, // Import Comment
+  Comment,
 } from '@prisma/client';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -14,7 +14,7 @@ import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar';
 import UserArticleRow from '@/components/dashboard/UserArticleRow';
 import NotificationItem from '@/components/dashboard/NotificationItem';
 
-// ... (DashboardCard and ApplicationStatusDisplay helpers remain the same) ...
+// --- Reusable Card Component ---
 function DashboardCard({
   title,
   children,
@@ -24,6 +24,7 @@ function DashboardCard({
   children: React.ReactNode;
   className?: string;
 }) {
+  // ... (Component remains the same) ...
   return (
     <div
       className={`bg-white p-6 rounded-lg shadow-lg border border-gray-200 ${className}`}
@@ -33,39 +34,44 @@ function DashboardCard({
     </div>
   );
 }
+
+// Helper for status badges in dashboard
 function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
-   let bgColor = 'bg-gray-100';
-   let textColor = 'text-gray-800';
-   let message = 'Your application status: ';
-   if (status === ApplicationStatus.PENDING) {
-     bgColor = 'bg-yellow-100';
-     textColor = 'text-yellow-800';
-     message = 'Your blogger application is currently pending review.';
-   } else if (status === ApplicationStatus.APPROVED) {
-     bgColor = 'bg-green-100';
-     textColor = 'text-green-800';
-      message = 'Congratulations! Your blogger application has been approved.';
-   } else if (status === ApplicationStatus.REJECTED) {
-     bgColor = 'bg-red-100';
-     textColor = 'text-red-800';
-      message = 'Your blogger application was reviewed but not approved at this time.';
-   }
+  // ... (Component remains the same) ...
+  let bgColor = 'bg-gray-100';
+  let textColor = 'text-gray-800';
+  let message = 'Your application status: ';
+  if (status === ApplicationStatus.PENDING) {
+    bgColor = 'bg-yellow-100';
+    textColor = 'text-yellow-800';
+    message = 'Your blogger application is currently pending review.';
+  } else if (status === ApplicationStatus.APPROVED) {
+    bgColor = 'bg-green-100';
+    textColor = 'text-green-800';
+    message = 'Congratulations! Your blogger application has been approved.';
+  } else if (status === ApplicationStatus.REJECTED) {
+    bgColor = 'bg-red-100';
+    textColor = 'text-red-800';
+    message =
+      'Your blogger application was reviewed but not approved at this time.';
+  }
 
-   return (
-      <div className="text-center p-4 rounded-lg border">
-         <p className="text-gray-700 mb-2">{message}</p>
-         <span
-           className={`px-3 py-1 text-sm font-semibold rounded-full ${bgColor} ${textColor}`}
-         >
-           {status}
-         </span>
-         {status === ApplicationStatus.REJECTED && (
-            <p className="mt-2 text-xs text-gray-500">Please contact support if you have questions.</p>
-         )}
-      </div>
-   );
+  return (
+    <div className="text-center p-4 rounded-lg border">
+      <p className="text-gray-700 mb-2">{message}</p>
+      <span
+        className={`px-3 py-1 text-sm font-semibold rounded-full ${bgColor} ${textColor}`}
+      >
+        {status}
+      </span>
+      {status === ApplicationStatus.REJECTED && (
+        <p className="mt-2 text-xs text-gray-500">
+          Please contact support if you have questions.
+        </p>
+      )}
+    </div>
+  );
 }
-
 
 export default async function Dashboard() {
   const session = await auth();
@@ -113,16 +119,16 @@ export default async function Dashboard() {
 
   // --- Fetch Recent Comments ---
   const userComments = await prisma.comment.findMany({
-      where: { authorId: userId },
-      orderBy: { createdAt: 'desc' },
-      take: 5, // Get 5 most recent comments
-      include: { 
-          article: { // Include article title and slug
-              select: { title: true, slug: true }
-          }
-      }
+    where: { authorId: userId },
+    orderBy: { createdAt: 'desc' },
+    take: 5, // Get 5 most recent comments
+    include: {
+      article: {
+        // Include article title and slug
+        select: { title: true, slug: true },
+      },
+    },
   });
-
 
   return (
     <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
@@ -164,6 +170,14 @@ export default async function Dashboard() {
             >
               🚀 Go to Admin Control Panel &rarr;
             </Link>
+            {/* --- START: Added Dev Page Link --- */}
+            <Link
+              href="/dev"
+              className="block mt-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Go to Developer Page &rarr;
+            </Link>
+            {/* --- END: Added Dev Page Link --- */}
           </div>
         )}
 
@@ -185,12 +199,10 @@ export default async function Dashboard() {
           )}
         </DashboardCard>
 
-
         {/* Grid Layout for Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* --- Profile Information Card --- */}
           <DashboardCard title="Your Profile" className="md:col-span-1">
-            {/* ... (Profile Card remains the same) ... */}
             <div className="flex items-center space-x-4 mb-6 pb-6 border-b border-gray-200">
               <UserProfileAvatar
                 src={session.user.image}
@@ -244,24 +256,36 @@ export default async function Dashboard() {
 
           {/* --- Updated Comments Card --- */}
           <DashboardCard title="Your Recent Comments" className="md:col-span-1">
-             {userComments.length > 0 ? (
-                <ul className="space-y-3 max-h-64 overflow-y-auto"> {/* Added max-h and overflow */}
-                    {userComments.map(comment => (
-                        <li key={comment.id} className="border-b border-gray-200 pb-3 last:border-b-0">
-                             <p className="text-gray-700 text-sm truncate" title={comment.content}>
-                                {comment.content}
-                             </p>
-                             <p className="text-xs text-gray-500 mt-1">
-                                On: <Link href={`/blog/${comment.article.slug}`} className="text-blue-600 hover:underline">{comment.article.title}</Link>
-                             </p>
-                        </li>
-                    ))}
-                </ul>
-             ) : (
-                <p className="text-gray-500 text-center py-4">
-                    You haven&apos;t posted any comments yet.
-                </p>
-             )}
+            {userComments.length > 0 ? (
+              <ul className="space-y-3 max-h-64 overflow-y-auto">
+                {userComments.map((comment) => (
+                  <li
+                    key={comment.id}
+                    className="border-b border-gray-200 pb-3 last:border-b-0"
+                  >
+                    <p
+                      className="text-gray-700 text-sm truncate"
+                      title={comment.content}
+                    >
+                      {comment.content}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      On:{' '}
+                      <Link
+                        href={`/blog/${comment.article.slug}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {comment.article.title}
+                      </Link>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 text-center py-4">
+                You haven&apos;t posted any comments yet.
+              </p>
+            )}
           </DashboardCard>
         </div>
 
@@ -271,8 +295,7 @@ export default async function Dashboard() {
             title="Your Articles"
             className="col-span-1 md:col-span-2"
           >
-             {/* ... (Remains the same) ... */}
-              <div className="flex justify-end mb-4">
+            <div className="flex justify-end mb-4">
               <Link
                 href="/dashboard/articles/new"
                 className="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm"
@@ -300,8 +323,7 @@ export default async function Dashboard() {
             title="Blogger Application"
             className="col-span-1 md:col-span-2 bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-200"
           >
-             {/* ... (Remains the same) ... */}
-             {applicationStatus ? (
+            {applicationStatus ? (
               <ApplicationStatusDisplay status={applicationStatus} />
             ) : (
               <>
