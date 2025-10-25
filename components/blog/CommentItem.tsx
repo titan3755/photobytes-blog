@@ -1,9 +1,9 @@
 import type { Comment, User } from '@prisma/client';
 import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar'; // Reusing dashboard avatar
 
-// Define the type for the prop, including the author info
-type CommentWithAuthor = Comment & {
-  author: Pick<User, 'name' | 'username' | 'image'>;
+// --- FIX: Add 'export' to the type definition ---
+export type CommentWithAuthor = Comment & {
+  author: Pick<User, 'id' | 'name' | 'username' | 'image'>;
 };
 
 interface CommentItemProps {
@@ -38,3 +38,4 @@ export default function CommentItem({ comment }: CommentItemProps) {
     </li>
   );
 }
+

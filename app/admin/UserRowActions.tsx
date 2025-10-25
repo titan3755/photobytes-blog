@@ -88,7 +88,7 @@ export default function UserRowActions({
         value={currentRole}
         onChange={handleRoleChange}
         disabled={isPending}
-        className="text-xs p-1 border border-gray-300 rounded"
+        className="text-xs text-black p-1 border border-gray-300 rounded"
       >
         <option value={Role.USER}>USER</option>
         <option value={Role.BLOGGER}>BLOGGER</option>

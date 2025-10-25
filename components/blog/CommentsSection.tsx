@@ -1,25 +1,31 @@
 import prisma from '@/lib/prisma';
-import { auth } from '@/auth'; // Get session server-side
+import { auth } from '@/auth';
 import CommentItem from './CommentItem';
 import CommentForm from './CommentForm';
+import type { CommentWithAuthor } from './CommentItem';
+import { unstable_noStore as noStore } from 'next/cache';
+import type { Session } from 'next-auth'; // 1. Import the Session type
 
 interface CommentsSectionProps {
   articleId: string;
+  articleSlug: string;
 }
 
-export default async function CommentsSection({ articleId }: CommentsSectionProps) {
-  // 1. Get session
-  const session = await auth();
+export default async function CommentsSection({ articleId, articleSlug }: CommentsSectionProps) {
+  noStore(); // 2. Add this line at the top
+
+  // 1. Get session and explicitly type it
+  const session: Session | null = await auth();
 
   // 2. Fetch comments for this article
   const comments = await prisma.comment.findMany({
     where: { articleId: articleId },
     include: {
-      author: { // Include author details
-        select: { name: true, username: true, image: true },
+      author: {
+        select: { id: true, name: true, username: true, image: true },
       },
     },
-    orderBy: { createdAt: 'asc' }, // Show oldest comments first
+    orderBy: { createdAt: 'asc' },
   });
 
   return (
@@ -28,9 +34,13 @@ export default async function CommentsSection({ articleId }: CommentsSectionProp
         Comments ({comments.length})
       </h2>
       
-      {/* 3. Render Comment Form (handles auth logic inside) */}
+      {/* 3. Render Comment Form */}
       <div className="mb-8">
-        <CommentForm articleId={articleId} session={session} />
+        <CommentForm 
+            articleId={articleId} 
+            session={session} 
+            articleSlug={articleSlug}
+        />
       </div>
 
       {/* 4. Render Comment List */}
@@ -38,8 +48,7 @@ export default async function CommentsSection({ articleId }: CommentsSectionProp
          {comments.length > 0 ? (
             <ul className="divide-y divide-gray-200">
                 {comments.map(comment => (
-                    // @ts-ignore (Type assertion for included author)
-                    <CommentItem key={comment.id} comment={comment} />
+                    <CommentItem key={comment.id} comment={comment as CommentWithAuthor} />
                 ))}
             </ul>
          ) : (
@@ -51,3 +60,4 @@ export default async function CommentsSection({ articleId }: CommentsSectionProp
     </section>
   );
 }
+
