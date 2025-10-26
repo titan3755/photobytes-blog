@@ -2,14 +2,12 @@
 
 import { useState, useTransition } from 'react';
 import { sendNotification } from './actions';
-import type { User } from '@prisma/client'; // Import User for allUsers prop
+import type { User } from '@prisma/client';
 
-// Define the shape of the user prop
 type SimpleUser = Pick<User, 'id' | 'username' | 'email' | 'name'>;
 
-// Define props for the form
 interface SendNotificationFormProps {
-    allUsers: SimpleUser[]; // Pass all users for the "Specific User" dropdown
+    allUsers: SimpleUser[];
 }
 
 export default function SendNotificationForm({ allUsers }: SendNotificationFormProps) {
@@ -54,7 +52,6 @@ export default function SendNotificationForm({ allUsers }: SendNotificationFormP
         setError(result.message || 'Failed to send notification.');
       } else {
         setSuccess(result.message || 'Notification sent!');
-        // Clear form
         setTitle('');
         setDescription('');
         setUrl('');
@@ -68,7 +65,7 @@ export default function SendNotificationForm({ allUsers }: SendNotificationFormP
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Title */}
       <div>
-        <label htmlFor="notifTitle" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="notifTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Title <span className="text-red-500">*</span>
         </label>
         <input
@@ -77,13 +74,13 @@ export default function SendNotificationForm({ allUsers }: SendNotificationFormP
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-black"
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm text-black"
         />
       </div>
 
       {/* Description */}
       <div>
-        <label htmlFor="notifDesc" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="notifDesc" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Description <span className="text-red-500">*</span>
         </label>
         <textarea
@@ -92,13 +89,13 @@ export default function SendNotificationForm({ allUsers }: SendNotificationFormP
           onChange={(e) => setDescription(e.target.value)}
           required
           rows={3}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-black"
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm text-black"
         />
       </div>
       
        {/* URL (Optional) */}
        <div>
-        <label htmlFor="notifUrl" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="notifUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Link URL (Optional)
         </label>
         <input
@@ -107,20 +104,20 @@ export default function SendNotificationForm({ allUsers }: SendNotificationFormP
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="/blog/my-new-post"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-black"
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm text-black"
         />
       </div>
 
       {/* Target Audience */}
       <div>
-        <label htmlFor="targetType" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="targetType" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Send To
         </label>
         <select
             id="targetType"
             value={targetType}
             onChange={(e) => setTargetType(e.target.value as any)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-black bg-white"
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm text-black bg-white"
         >
             <option value="ALL_USERS">All Users</option>
             <option value="ALL_BLOGGERS">All Bloggers</option>
@@ -132,7 +129,7 @@ export default function SendNotificationForm({ allUsers }: SendNotificationFormP
       {/* Specific User Selector (Conditional) */}
       {targetType === 'SPECIFIC_USER' && (
            <div>
-            <label htmlFor="specificUser" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="specificUser" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Select User
             </label>
              <select
@@ -140,7 +137,7 @@ export default function SendNotificationForm({ allUsers }: SendNotificationFormP
                 value={specificUserId}
                 onChange={(e) => setSpecificUserId(e.target.value)}
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-black bg-white"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm text-black bg-white"
             >
                 <option value="">-- Please select a user --</option>
                 {allUsers.map(user => (
@@ -156,13 +153,13 @@ export default function SendNotificationForm({ allUsers }: SendNotificationFormP
       <button
         type="submit"
         disabled={isPending}
-        className="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+        className="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
       >
         {isPending ? 'Sending...' : 'Send Notification'}
       </button>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {success && <p className="text-green-600 text-sm">{success}</p>}
+      {error && <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>}
+      {success && <p className="text-green-600 dark:text-green-400 text-sm">{success}</p>}
     </form>
   );
 }

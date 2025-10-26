@@ -27,9 +27,9 @@ import type { ApplicationWithUser } from './BloggerApplicationModal';
 // Helper function to render stat cards
 function StatCard({ title, value }: { title: string; value: number | string }) {
   return (
-    <div className="bg-white data-[theme=dark]:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 data-[theme=dark]:border-gray-700">
-      <h3 className="text-sm font-medium text-gray-500 data-[theme=dark]:text-gray-400">{title}</h3>
-      <p className="mt-2 text-3xl font-bold text-gray-900 data-[theme=dark]:text-white">{value}</p>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</h3>
+      <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
     </div>
   );
 }
@@ -38,24 +38,24 @@ function StatCard({ title, value }: { title: string; value: number | string }) {
 function StatusBadge({ status }: { status: ApplicationStatus }) {
   let bgColor = 'bg-gray-100';
   let textColor = 'text-gray-800';
-  let darkBgColor = 'data-[theme=dark]:bg-gray-700';
-  let darkTextColor = 'data-[theme=dark]:text-gray-200';
+  let darkBgColor = 'dark:bg-gray-700';
+  let darkTextColor = 'dark:text-gray-200';
 
   if (status === ApplicationStatus.PENDING) {
     bgColor = 'bg-yellow-100';
     textColor = 'text-yellow-800';
-    darkBgColor = 'data-[theme=dark]:bg-yellow-900';
-    darkTextColor = 'data-[theme=dark]:text-yellow-300';
+    darkBgColor = 'dark:bg-yellow-900';
+    darkTextColor = 'dark:text-yellow-300';
   } else if (status === ApplicationStatus.APPROVED) {
     bgColor = 'bg-green-100';
     textColor = 'text-green-800';
-    darkBgColor = 'data-[theme=dark]:bg-green-900';
-    darkTextColor = 'data-[theme=dark]:text-green-300';
+    darkBgColor = 'dark:bg-green-900';
+    darkTextColor = 'dark:text-green-300';
   } else if (status === ApplicationStatus.REJECTED) {
     bgColor = 'bg-red-100';
     textColor = 'text-red-800';
-    darkBgColor = 'data-[theme=dark]:bg-red-900';
-    darkTextColor = 'data-[theme=dark]:text-red-300';
+    darkBgColor = 'dark:bg-red-900';
+    darkTextColor = 'dark:text-red-300';
   }
 
   return (
@@ -73,8 +73,8 @@ function ArticleStatusBadge({ published }: { published: boolean }) {
     <span
       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
         published 
-        ? 'bg-green-100 text-green-800 data-[theme=dark]:bg-green-900 data-[theme=dark]:text-green-300' 
-        : 'bg-yellow-100 text-yellow-800 data-[theme=dark]:bg-yellow-900 data-[theme=dark]:text-yellow-300'
+        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
       }`}
     >
       {published ? 'Published' : 'Draft'}
@@ -139,14 +139,15 @@ export default async function AdminPage() {
       author: { select: { name: true, username: true, email: true } },
       article: { select: { title: true, slug: true } },
     },
-    take: 50, // Paginate or limit initial fetch
+    take: 50,
   });
 
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 data-[theme=dark]:bg-gray-900 p-4 md:p-8 min-w-screen flex flex-col items-center justify-center">
+    // Page container inherits bg-gray-50/dark:bg-gray-900 from layout
+    <div className="min-h-screen w-full p-4 md:p-8">
       <div className="max-w-7xl w-full mx-auto space-y-12">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 data-[theme=dark]:text-white">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white">
           Admin Control Panel
         </h1>
 
@@ -167,29 +168,29 @@ export default async function AdminPage() {
         </div>
         
          {/* --- Category Management Section --- */}
-         <div className="bg-white data-[theme=dark]:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 data-[theme=dark]:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-800 data-[theme=dark]:text-gray-100 mb-6"> Category Management </h2>
+         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Category Management </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-1">
-                    <h3 className="text-lg font-medium text-gray-900 data-[theme=dark]:text-white mb-4">Add New Category</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Add New Category</h3>
                     <CategoryForm />
                 </div>
                 <div className="md:col-span-2">
-                    <h3 className="text-lg font-medium text-gray-900 data-[theme=dark]:text-white mb-4">Existing Categories ({allCategories.length})</h3>
-                    <div className="border border-gray-200 data-[theme=dark]:border-gray-700 rounded-lg max-h-64 overflow-y-auto">
-                        <ul className="divide-y divide-gray-200 data-[theme=dark]:divide-gray-700">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Existing Categories ({allCategories.length})</h3>
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-64 overflow-y-auto">
+                        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                             {allCategories.length > 0 ? (
                                 allCategories.map((category) => (
-                                <li key={category.id} className="px-4 py-3 flex items-center justify-between hover:bg-gray-50 data-[theme=dark]:hover:bg-gray-700">
+                                <li key={category.id} className="px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <div>
-                                        <p className="text-sm font-medium text-gray-900 data-[theme=dark]:text-white">{category.name}</p>
-                                        <p className="text-xs text-gray-500 data-[theme=dark]:text-gray-400">{category.slug}</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{category.name}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{category.slug}</p>
                                     </div>
                                     <CategoryRowActions categoryId={category.id} categoryName={category.name} />
                                 </li>
                                 ))
                             ) : (
-                                <li className="px-4 py-3 text-sm text-gray-500 data-[theme=dark]:text-gray-400 text-center">No categories created yet.</li>
+                                <li className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">No categories created yet.</li>
                             )}
                         </ul>
                     </div>
@@ -198,38 +199,38 @@ export default async function AdminPage() {
          </div>
          
          {/* --- New Notification Section --- */}
-         <div className="bg-white data-[theme=dark]:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 data-[theme=dark]:border-gray-700">
-             <h2 className="text-2xl font-bold text-gray-800 data-[theme=dark]:text-gray-100 mb-6"> Send Notification </h2>
+         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Send Notification </h2>
              <SendNotificationForm allUsers={allUsers} />
          </div>
 
          {/* --- All Notifications Table --- */}
-         <div className="bg-white data-[theme=dark]:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 data-[theme=dark]:border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-800 data-[theme=dark]:text-gray-100 mb-6">
+         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
             Sent Notifications Log
           </h2>
           <div className="overflow-x-auto">
-            <table className="w-full divide-y divide-gray-200 data-[theme=dark]:divide-gray-700"><thead className="bg-gray-50 data-[theme=dark]:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Title</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Description</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Link</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Sent To (Count)</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Sent At</th><th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th></tr></thead><tbody className="bg-white data-[theme=dark]:bg-gray-800 divide-y divide-gray-200 data-[theme=dark]:divide-gray-700">{
+            <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Link</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sent To (Count)</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sent At</th><th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{
                 allNotifications.length > 0 ? (
                   allNotifications.map((notif) => (
-                    <tr key={notif.id} className="hover:bg-gray-50 data-[theme=dark]:hover:bg-gray-700">
+                    <tr key={notif.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap">
-                         <div className="text-sm font-medium text-gray-900 data-[theme=dark]:text-white truncate max-w-xs" title={notif.title}>{notif.title}</div>
+                         <div className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-xs" title={notif.title}>{notif.title}</div>
                       </td>
                       <td className="px-6 py-4 max-w-sm">
-                         <p className="text-sm text-gray-700 data-[theme=dark]:text-gray-300 truncate" title={notif.description}>{notif.description}</p>
+                         <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={notif.description}>{notif.description}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {notif.url ? (
-                            <Link href={notif.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 data-[theme=dark]:text-blue-400 hover:underline truncate">View Link</Link>
+                            <Link href={notif.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline truncate">View Link</Link>
                           ) : (
-                            <span className="text-gray-400 data-[theme=dark]:text-gray-500">None</span>
+                            <span className="text-gray-400 dark:text-gray-500">None</span>
                           )}
                       </td>
-                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 data-[theme=dark]:text-gray-400">
+                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                          {notif._count.userNotifications} user(s)
                        </td>
-                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 data-[theme=dark]:text-gray-400">
+                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                          {new Date(notif.createdAt).toLocaleString()}
                        </td>
                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -238,90 +239,90 @@ export default async function AdminPage() {
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 data-[theme=dark]:text-gray-400">No notifications sent yet.</td></tr>
+                  <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No notifications sent yet.</td></tr>
                 )
               }</tbody></table>
           </div>
         </div>
 
          {/* --- All Articles Management Table --- */}
-        <div className="bg-white data-[theme=dark]:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 data-[theme=dark]:border-gray-700">
-           <h2 className="text-2xl font-bold text-gray-800 data-[theme=dark]:text-gray-100 mb-6"> Manage All Articles </h2>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Manage All Articles </h2>
            <div className="overflow-x-auto">
-             <table className="w-full divide-y divide-gray-200 data-[theme=dark]:divide-gray-700"><thead className="bg-gray-50 data-[theme=dark]:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Title</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Author</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Status</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Created</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Updated</th><th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th></tr></thead><tbody className="bg-white data-[theme=dark]:bg-gray-800 divide-y divide-gray-200 data-[theme=dark]:divide-gray-700">{
+             <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Updated</th><th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{
                 allArticles.length > 0 ? (
                   allArticles.map((article) => (
-                    <tr key={article.id} className="hover:bg-gray-50 data-[theme=dark]:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-900 data-[theme=dark]:text-white truncate max-w-xs" title={article.title}>{article.title}</div></td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 data-[theme=dark]:text-gray-400">{article.author?.name || article.author?.username || article.author?.email || 'N/A'}</td>
+                    <tr key={article.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-xs" title={article.title}>{article.title}</div></td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{article.author?.name || article.author?.username || article.author?.email || 'N/A'}</td>
                       <td className="px-6 py-4 whitespace-nowrap"><ArticleStatusBadge published={article.published} /></td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 data-[theme=dark]:text-gray-400">{new Date(article.createdAt).toLocaleDateString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 data-[theme=dark]:text-gray-400">{new Date(article.updatedAt).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(article.createdAt).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(article.updatedAt).toLocaleDateString()}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <Link href={`/blog/${article.slug}`} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 data-[theme=dark]:text-gray-400 data-[theme=dark]:hover:text-white" title="View Article"> View </Link>
-                        <Link href={`/dashboard/articles/edit/${article.slug}`} className="text-blue-600 hover:text-blue-900 data-[theme=dark]:text-blue-400 data-[theme=dark]:hover:text-blue-300" title="Edit Article"> Edit </Link>
+                        <Link href={`/blog/${article.slug}`} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" title="View Article"> View </Link>
+                        <Link href={`/dashboard/articles/edit/${article.slug}`} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" title="Edit Article"> Edit </Link>
                         <AdminArticleRowActions articleId={article.id} articleTitle={article.title} />
                       </td>
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 data-[theme=dark]:text-gray-400"> No articles found. </td></tr>
+                  <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"> No articles found. </td></tr>
                 )
               }</tbody></table>
            </div>
         </div>
 
         {/* --- Start: Blogger Application Management Table --- */}
-        <div className="bg-white data-[theme=dark]:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 data-[theme=dark]:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-800 data-[theme=dark]:text-gray-100 mb-6"> Blogger Applications </h2>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Blogger Applications </h2>
             <div className="overflow-x-auto">
-             <table className="w-full divide-y divide-gray-200 data-[theme=dark]:divide-gray-700"><thead className="bg-gray-50 data-[theme=dark]:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider"> Applicant </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider"> Reason </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider"> Topics </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider"> Sample </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider"> Status </th><th scope="col" className="relative px-6 py-3 text-right"> Actions </th></tr></thead><tbody className="bg-white data-[theme=dark]:bg-gray-800 divide-y divide-gray-200 data-[theme=dark]:divide-gray-700">{
+             <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Applicant </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Reason </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Topics </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Sample </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Status </th><th scope="col" className="relative px-6 py-3 text-right"> Actions </th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{
                 bloggerApplications.length > 0 ? (
                   bloggerApplications.map((app) => (
-                    <tr key={app.id} className="hover:bg-gray-50 data-[theme=dark]:hover:bg-gray-700">
+                    <tr key={app.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 data-[theme=dark]:text-white">{app.user?.name || app.user?.username || 'N/A'}</div>
-                        <div className="text-xs text-gray-500 data-[theme=dark]:text-gray-400">{app.user?.email || 'N/A'}</div>
-                        <div className="text-xs text-gray-400 data-[theme=dark]:text-gray-500 mt-1">Applied: {new Date(app.createdAt).toLocaleDateString()}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{app.user?.name || app.user?.username || 'N/A'}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{app.user?.email || 'N/A'}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Applied: {new Date(app.createdAt).toLocaleDateString()}</div>
                       </td>
-                      <td className="px-6 py-4 max-w-xs"> <p className="text-sm text-gray-700 data-[theme=dark]:text-gray-300 truncate" title={app.reason}> {app.reason} </p> </td>
-                      <td className="px-6 py-4 max-w-xs"> <p className="text-sm text-gray-700 data-[theme=dark]:text-gray-300 truncate" title={app.topics}> {app.topics} </p> </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm"> {app.sampleUrl ? ( <a href={app.sampleUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 data-[theme=dark]:text-blue-400 hover:underline">View</a> ) : ( <span className="text-gray-400 data-[theme=dark]:text-gray-500">None</span> )} </td>
+                      <td className="px-6 py-4 max-w-xs"> <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={app.reason}> {app.reason} </p> </td>
+                      <td className="px-6 py-4 max-w-xs"> <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={app.topics}> {app.topics} </p> </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm"> {app.sampleUrl ? ( <a href={app.sampleUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">View</a> ) : ( <span className="text-gray-400 dark:text-gray-500">None</span> )} </td>
                       <td className="px-6 py-4 whitespace-nowrap"> <StatusBadge status={app.status} /> </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"> <BloggerApplicationRowActions application={app as ApplicationWithUser} /> </td>
                     </tr>
                   ))
                 ) : (
-                  <tr> <td colSpan={6} className="px-6 py-4 text-center text-gray-500 data-[theme=dark]:text-gray-400"> No blogger applications received yet. </td> </tr>
+                  <tr> <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"> No blogger applications received yet. </td> </tr>
                 )
               }</tbody></table>
             </div>
         </div>
 
         {/* --- User Management Table --- */}
-        <div className="bg-white data-[theme=dark]:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 data-[theme=dark]:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-800 data-[theme=dark]:text-gray-100 mb-6"> User Management </h2>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> User Management </h2>
             <div className="overflow-x-auto">
-              <table className="w-full divide-y divide-gray-200 data-[theme=dark]:divide-gray-700"><thead className="bg-gray-50 data-[theme=dark]:bg-gray-700"><tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Name</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Email</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Joined</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Comments</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Role</th>
+              <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Joined</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Comments</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
                   <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
-                </tr></thead><tbody className="bg-white data-[theme=dark]:bg-gray-800 divide-y divide-gray-200 data-[theme=dark]:divide-gray-700">{
+                </tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{
                 allUsers.length > 0 ? (
                   allUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 data-[theme=dark]:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm font-medium text-gray-900 data-[theme=dark]:text-white">{user.name || user.username || 'N/A'}</div> </td>
-                      <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm text-gray-500 data-[theme=dark]:text-gray-400">{user.email || 'N/A'}</div> </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 data-[theme=dark]:text-gray-400"> {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'} </td>
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm font-medium text-gray-900 dark:text-white">{user.name || user.username || 'N/A'}</div> </td>
+                      <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm text-gray-500 dark:text-gray-400">{user.email || 'N/A'}</div> </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"> {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'} </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                         <span className={`px-2 py-0.5 rounded-full text-xs ${user.canComment ? 'bg-green-100 text-green-800 data-[theme=dark]:bg-green-900 data-[theme=dark]:text-green-300' : 'bg-red-100 text-red-800 data-[theme=dark]:bg-red-900 data-[theme=dark]:text-red-300'}`}>
+                         <span className={`px-2 py-0.5 rounded-full text-xs ${user.canComment ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'}`}>
                            {user.canComment ? 'Allowed' : 'Blocked'}
                          </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap"> <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ADMIN' ? 'bg-red-100 text-red-800 data-[theme=dark]:bg-red-900 data-[theme=dark]:text-red-300' : user.role === 'BLOGGER' ? 'bg-blue-100 text-blue-800 data-[theme=dark]:bg-blue-900 data-[theme=dark]:text-blue-300' : 'bg-gray-100 text-gray-800 data-[theme=dark]:bg-gray-700 data-[theme=dark]:text-gray-200'}`}> {user.role} </span> </td>
+                      <td className="px-6 py-4 whitespace-nowrap"> <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ADMIN' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' : user.role === 'BLOGGER' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}> {user.role} </span> </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                          <UserRowActions 
                             userId={user.id} 
@@ -333,40 +334,40 @@ export default async function AdminPage() {
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 data-[theme=dark]:text-gray-400">No users found.</td></tr>
+                  <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No users found.</td></tr>
                 )}
               </tbody></table>
             </div>
         </div>
 
         {/* --- Comment Management Table --- */}
-        <div className="bg-white data-[theme=dark]:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 data-[theme=dark]:border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-800 data-[theme=dark]:text-gray-100 mb-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
             Recent Comments
           </h2>
           <div className="overflow-x-auto">
-            <table className="w-full divide-y divide-gray-200 data-[theme=dark]:divide-gray-700"><thead className="bg-gray-50 data-[theme=dark]:bg-gray-700"><tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Comment</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">User</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">On Article</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Date</th>
+            <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Comment</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">On Article</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
                   <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
-                </tr></thead><tbody className="bg-white data-[theme=dark]:bg-gray-800 divide-y divide-gray-200 data-[theme=dark]:divide-gray-700">{
+                </tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{
                 allComments.length > 0 ? (
                   allComments.map((comment) => (
-                    <tr key={comment.id} className="hover:bg-gray-50 data-[theme=dark]:hover:bg-gray-700">
+                    <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 max-w-sm">
-                         <p className="text-sm text-gray-700 data-[theme=dark]:text-gray-300 truncate" title={comment.content}>{comment.content}</p>
+                         <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={comment.content}>{comment.content}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 data-[theme=dark]:text-gray-400">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {comment.author?.name || comment.author?.username || 'N/A'}
                       </td>
                        <td className="px-6 py-4 whitespace-nowrap">
-                         <Link href={`/blog/${comment.article.slug}`} className="text-sm text-blue-600 data-[theme=dark]:text-blue-400 hover:underline truncate max-w-xs" title={comment.article.title}>
+                         <Link href={`/blog/${comment.article.slug}`} className="text-sm text-blue-600 dark:text-blue-400 hover:underline truncate max-w-xs" title={comment.article.title}>
                            {comment.article.title}
                          </Link>
                        </td>
-                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 data-[theme=dark]:text-gray-400">
+                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                          {new Date(comment.createdAt).toLocaleString()}
                        </td>
                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -375,40 +376,123 @@ export default async function AdminPage() {
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan={5} className="px-6 py-4 text-center text-gray-500 data-[theme=dark]:text-gray-400">No comments found.</td></tr>
+                  <tr><td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No comments found.</td></tr>
                 )
               }</tbody></table>
           </div>
         </div>
 
         {/* --- Contact Message Management Table --- */}
-        <div className="bg-white data-[theme=dark]:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 data-[theme=dark]:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-800 data-[theme=dark]:text-gray-100 mb-6"> Contact Messages </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full divide-y divide-gray-200 data-[theme=dark]:divide-gray-700"><thead className="bg-gray-50 data-[theme=dark]:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Received</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">From</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Email</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Message</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 data-[theme=dark]:text-gray-400 uppercase tracking-wider">Status</th><th scope="col" className="relative px-6 py-3 text-right">Actions</th></tr></thead><tbody className="bg-white data-[theme=dark]:bg-gray-800 divide-y divide-gray-200 data-[theme=dark]:divide-gray-700">{
-                contactMessages.length > 0 ? (
-                  contactMessages.map((message) => (
-                    <tr key={message.id} className={`${message.isRead ? 'opacity-70 data-[theme=dark]:opacity-60' : 'font-semibold'} hover:bg-gray-50 data-[theme=dark]:hover:bg-gray-700`}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 data-[theme=dark]:text-gray-400">{new Date(message.createdAt).toLocaleString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900 data-[theme=dark]:text-white">{message.name}</div></td>
-                      <td className="px-6 py-4 whitespace-nowrap"><a href={`mailto:${message.email}`} className="text-sm text-blue-600 data-[theme=dark]:text-blue-400 hover:underline">{message.email}</a></td>
-                      <td className="px-6 py-4 max-w-sm">
-                        <p className="text-sm text-gray-700 data-[theme=dark]:text-gray-300 truncate" title={message.message}>
-                            {message.message}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap"> <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${message.isRead ? 'bg-gray-100 text-gray-800 data-[theme=dark]:bg-gray-700 data-[theme=dark]:text-gray-200' : 'bg-green-100 text-green-800 data-[theme=dark]:bg-green-900 data-[theme=dark]:text-green-300 animate-pulse'}`}> {message.isRead ? 'Read' : 'Unread'} </span> </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <ContactMessageRowActions message={message} />
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 data-[theme=dark]:text-gray-400">No contact messages received yet.</td></tr>
-                )
-              }</tbody></table>
-            </div>
-        </div>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+    Contact Messages
+  </h2>
+  <div className="overflow-x-auto">
+    <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead className="bg-gray-50 dark:bg-gray-700">
+        <tr>
+          <th
+            scope="col"
+            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+          >
+            Received
+          </th>
+          <th
+            scope="col"
+            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+          >
+            From
+          </th>
+          <th
+            scope="col"
+            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+          >
+            Email
+          </th>
+          <th
+            scope="col"
+            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+          >
+            Message
+          </th>
+          <th
+            scope="col"
+            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+          >
+            Status
+          </th>
+          <th
+            scope="col"
+            className="relative px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+        {contactMessages.length > 0 ? (
+          contactMessages.map((message) => (
+            <tr
+              key={message.id}
+              className={`${
+                message.isRead ? 'opacity-70 dark:opacity-60' : 'font-semibold'
+              } hover:bg-gray-50 dark:hover:bg-gray-700`}
+            >
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                {new Date(message.createdAt).toLocaleString()}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="text-sm text-gray-900 dark:text-white">
+                  {message.name}
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <a
+                  href={`mailto:${message.email}`}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {message.email}
+                </a>
+              </td>
+              <td className="px-6 py-4 max-w-sm">
+                <p
+                  className="text-sm text-gray-700 dark:text-gray-300 truncate"
+                  title={message.message}
+                >
+                  {message.message}
+                </p>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span
+                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    message.isRead
+                      ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                      : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 animate-pulse'
+                  }`}
+                >
+                  {message.isRead ? 'Read' : 'Unread'}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <ContactMessageRowActions message={message} />
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td
+              colSpan={6}
+              className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
+            >
+              No contact messages received yet.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
+
       </div>
     </div>
   );

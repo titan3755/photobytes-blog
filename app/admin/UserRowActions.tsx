@@ -2,18 +2,18 @@
 
 import { useState, useTransition } from 'react';
 import { Role } from '@prisma/client';
-import { updateUserRole, deleteUser, toggleCommentStatus } from './actions'; // 1. Import toggleCommentStatus
+import { updateUserRole, deleteUser, toggleCommentStatus } from './actions';
 
 export default function UserRowActions({
   userId,
   currentRole,
   isCurrentUser,
-  canComment, // 2. Add canComment prop
+  canComment,
 }: {
   userId: string;
   currentRole: Role;
   isCurrentUser: boolean;
-  canComment: boolean; // 2. Add canComment prop
+  canComment: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -55,9 +55,8 @@ export default function UserRowActions({
     });
   };
 
-  // 3. Add handler for toggling comment status
   const handleToggleComment = () => {
-    const action = canComment ? 'block' : 'unblock';
+    const action = canComment ? 'Block' : 'Unblock';
     if (
       !window.confirm(
         `Are you sure you want to ${action} this user from commenting?`
@@ -74,28 +73,28 @@ export default function UserRowActions({
     });
   };
 
+
   if (isCurrentUser) {
     return (
-      <span className="text-xs text-gray-500 italic">
+      <span className="text-xs text-gray-500 dark:text-gray-400 italic">
         (Your Account)
       </span>
     );
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center flex-wrap gap-2">
       <select
         value={currentRole}
         onChange={handleRoleChange}
         disabled={isPending}
-        className="text-xs text-black p-1 border border-gray-300 rounded"
+        className="text-xs p-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded"
       >
         <option value={Role.USER}>USER</option>
         <option value={Role.BLOGGER}>BLOGGER</option>
         <option value={Role.ADMIN}>ADMIN</option>
       </select>
       
-      {/* 4. Add new button */}
       <button
         onClick={handleToggleComment}
         disabled={isPending}
@@ -111,12 +110,11 @@ export default function UserRowActions({
       <button
         onClick={handleDelete}
         disabled={isPending}
-        className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
+        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium disabled:opacity-50"
       >
         Delete
       </button>
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {error && <p className="text-red-500 dark:text-red-400 text-xs mt-1">{error}</p>}
     </div>
   );
 }
-

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { deleteArticle } from './actions'; // Ensure this points to the updated action
+import { deleteArticle } from './actions'; // Import the new action
 
 export default function AdminArticleRowActions({
   articleId,
@@ -15,32 +15,30 @@ export default function AdminArticleRowActions({
 
   const handleDelete = async () => {
     // Add a confirmation dialog
-    if (!window.confirm(`ADMIN ACTION: Are you sure you want to delete the article "${articleTitle}"? This action cannot be undone.`)) {
+    if (!window.confirm(`Are you sure you want to delete the article "${articleTitle}"? This action cannot be undone.`)) {
       return;
     }
     setError(null);
     startTransition(async () => {
-      // Call the same deleteArticle action
       const result = await deleteArticle(articleId);
       if (!result.success) {
         setError(result.message || 'Failed to delete article.');
       }
-      // Revalidation is handled by the Server Action
+      // No success message needed, revalidatePath will refresh the table
     });
   };
 
   return (
-    // Use inline-flex if placing next to View/Edit links in admin table
-    <div className="inline-flex items-center">
+    <div className="inline-flex items-center space-x-2">
       <button
         onClick={handleDelete}
         disabled={isPending}
-        className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed ml-2" // Added margin-left
-        title="Delete Article (Admin)"
+        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        title="Delete Article"
       >
         {isPending ? 'Deleting...' : 'Delete'}
       </button>
-      {error && <p className="text-red-500 text-xs ml-2">{error}</p>}
+      {error && <p className="text-red-500 dark:text-red-400 text-xs">{error}</p>}
     </div>
   );
 }

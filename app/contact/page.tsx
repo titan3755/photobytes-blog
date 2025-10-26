@@ -16,12 +16,12 @@ export default function ContactPage() {
     if (isAuthenticated && session?.user) {
       setName(session.user.name || '');
       setEmail(session.user.email || '');
-    }
-    else if (status === 'unauthenticated') {
-        setName('');
-        setEmail('');
+    } else if (status === 'unauthenticated') {
+      setName('');
+      setEmail('');
     }
   }, [session, status, isAuthenticated]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormStatus('Submitting...');
@@ -44,10 +44,9 @@ export default function ContactPage() {
       setFormStatus('Message sent successfully! We will get back to you soon...');
       setMessage('');
       if (!isAuthenticated) {
-          setName('');
-          setEmail('');
+        setName('');
+        setEmail('');
       }
-
     } catch (err: any) {
       setFormStatus('');
       setError(err.message || 'Failed to send message. Please try again.');
@@ -55,13 +54,13 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="py-12 px-4 sm:px-6 lg:px-8 min-h-screen min-w-screen bg-gray-50 flex flex-col items-center justify-center">
+    <div className="py-12 px-4 sm:px-6 lg:px-8 min-h-screen min-w-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center">
       <div className="max-w-3xl mx-auto w-full">
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl">
             Contact Us
           </h1>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
             Have a question, feedback, or a project idea? We&apos;d love to hear
             from you.
           </p>
@@ -70,7 +69,7 @@ export default function ContactPage() {
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Your Name
             </label>
@@ -84,8 +83,10 @@ export default function ContactPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isAuthenticated} // Disable if logged in
-                className={`block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900 ${
-                  isAuthenticated ? 'bg-gray-100 cursor-not-allowed' : '' // Style if disabled
+                className={`block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 text-gray-900 dark:text-white ${
+                  isAuthenticated
+                    ? 'bg-gray-100 dark:bg-gray-800 dark:text-gray-400 cursor-not-allowed'
+                    : 'dark:bg-gray-700' // Style if disabled
                 }`}
               />
             </div>
@@ -94,7 +95,7 @@ export default function ContactPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Your Email
             </label>
@@ -108,8 +109,10 @@ export default function ContactPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isAuthenticated} // Disable if logged in
-                className={`block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900 ${
-                  isAuthenticated ? 'bg-gray-100 cursor-not-allowed' : '' // Style if disabled
+                className={`block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 text-gray-900 dark:text-white ${
+                  isAuthenticated
+                    ? 'bg-gray-100 dark:bg-gray-800 dark:text-gray-400 cursor-not-allowed'
+                    : 'dark:bg-gray-700' // Style if disabled
                 }`}
               />
             </div>
@@ -118,7 +121,7 @@ export default function ContactPage() {
           <div>
             <label
               htmlFor="message"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Message
             </label>
@@ -130,7 +133,7 @@ export default function ContactPage() {
                 required
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+                className="block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 text-gray-900"
               />
             </div>
           </div>
@@ -139,17 +142,17 @@ export default function ContactPage() {
             <button
               type="submit"
               disabled={formStatus === 'Submitting...'}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
               {formStatus === 'Submitting...' ? 'Sending...' : 'Send Message'}
             </button>
           </div>
 
           {formStatus && formStatus !== 'Submitting...' && (
-            <p className="text-center text-sm text-green-600">{formStatus}</p>
+            <p className="text-center text-sm text-green-600 dark:text-green-400">{formStatus}</p>
           )}
           {error && (
-            <p className="text-center text-sm text-red-600">{error}</p>
+            <p className="text-center text-sm text-red-600 dark:text-red-400">{error}</p>
           )}
         </form>
       </div>

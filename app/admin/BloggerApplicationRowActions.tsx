@@ -7,13 +7,10 @@ import {
   rejectBloggerApplication,
 } from './actions';
 import BloggerApplicationModal from './BloggerApplicationModal';
-// 1. Import the shared type from the modal file
 import type { ApplicationWithUser } from './BloggerApplicationModal';
 
-// 2. Remove the local type definition that was here
-
 export default function BloggerApplicationRowActions({
-  application, // 3. Use the imported type
+  application,
 }: {
   application: ApplicationWithUser;
 }) {
@@ -61,7 +58,7 @@ export default function BloggerApplicationRowActions({
       <div className="flex items-center space-x-2 justify-end">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+          className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500"
         >
           View Details
         </button>
@@ -87,7 +84,7 @@ export default function BloggerApplicationRowActions({
       </div>
 
       {error && (
-        <p className="text-red-500 text-xs mt-1 text-right">{error}</p>
+        <p className="text-red-500 dark:text-red-400 text-xs mt-1 text-right">{error}</p>
       )}
 
       {isModalOpen && (

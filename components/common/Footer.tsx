@@ -29,7 +29,7 @@ const TwitterIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-100">
+    <footer className="bg-gray-100 dark:bg-gray-900">
       <div className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="md:grid md:grid-cols-4 md:gap-8">
           <div className="space-y-4">
@@ -45,25 +45,25 @@ export default function Footer() {
                 className="h-8 w-8"
                 unoptimized={true}
               />
-              <span className="self-center text-2xl font-semibold whitespace-nowrap text-gray-900">
+              <span className="self-center text-2xl font-semibold whitespace-nowrap text-gray-900 dark:text-white">
                 PhotoBytes Blog
               </span>
             </Link>
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
               The official blog for PhotoBytes Studios, covering tech,
               photography, and development.
             </p>
           </div>
           <div className="hidden md:block"></div>
           <div className="mt-10 md:mt-0">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
               Resources
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
                 <Link
                   href="/about"
-                  className="text-base text-gray-500 hover:text-gray-900"
+                  className="text-base text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
                 >
                   About
                 </Link>
@@ -71,7 +71,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/contact"
-                  className="text-base text-gray-500 hover:text-gray-900"
+                  className="text-base text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
                 >
                   Contact
                 </Link>
@@ -80,14 +80,14 @@ export default function Footer() {
           </div>
 
           <div className="mt-10 md:mt-0">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
               Legal
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
                 <Link
                   href="/privacy"
-                  className="text-base text-gray-500 hover:text-gray-900"
+                  className="text-base text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
                 >
                   Privacy Policy
                 </Link>
@@ -95,7 +95,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/licensing"
-                  className="text-base text-gray-500 hover:text-gray-900"
+                  className="text-base text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
                 >
                   Licensing
                 </Link>
@@ -103,8 +103,8 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-12 pt-8 border-t border-gray-200 sm:flex sm:items-center sm:justify-between">
-          <span className="text-sm text-gray-500 sm:text-center">
+        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 sm:flex sm:items-center sm:justify-between">
+          <span className="text-sm text-gray-500 sm:text-center dark:text-gray-400">
             © {new Date().getFullYear()}{' '}
             <a
               href="https://photobytes-reworked.vercel.app/"
@@ -119,14 +119,14 @@ export default function Footer() {
               href="https://www.facebook.com/PhotoBytes999"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-400 hover:text-gray-500"
+              className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-white"
             >
               <span className="sr-only">Facebook</span>
               <FacebookIcon className="h-6 w-6" />
             </a>
             <a
               href="#"
-              className="text-gray-400 hover:text-gray-500"
+              className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-white"
             >
               <span className="sr-only">Twitter</span>
               <TwitterIcon className="h-6 w-6" />

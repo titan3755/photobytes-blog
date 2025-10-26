@@ -9,25 +9,27 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="bg-white py-12 px-4 sm:px-6 lg:px-8 min-h-screen min-w-screen flex flex-col items-center justify-center ">
+    // FIX: Removed "bg-white" to allow theme inheritance from layout.
+    // The bg-gray-50/dark:bg-gray-900 from layout will now show.
+    <div className="py-12 px-4 sm:px-6 lg:px-8 min-h-screen min-w-screen flex flex-col items-center justify-center">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl">
             About PhotoBytes
           </h1>
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">
             Technology, photography, and development, all in one byte.
           </p>
         </div>
 
         {/* Main Content Section */}
-        <div className="mt-12 text-lg text-gray-700 space-y-6">
+        <div className="mt-12 text-lg text-gray-700 dark:text-gray-300 space-y-6">
           <p>
             Welcome to PhotoBytes Blog, the official blog for{' '}
             <a
               href="https://photobytes-reworked.vercel.app/"
-              className="text-blue-600 hover:underline font-medium"
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -51,10 +53,11 @@ export default function AboutPage() {
               alt="PhotoBytes team"
               fill
               className="object-cover"
+              priority // Prioritize loading LCP image
             />
           </div>
 
-          <h2 className="text-3xl font-bold text-gray-900 pt-4">Our Team</h2>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white pt-4">Our Team</h2>
           <p>
             PhotoBytes is run by a small, dedicated team. We believe in the power
             of sharing knowledge and building a community. While we may be small,
@@ -75,10 +78,10 @@ export default function AboutPage() {
                 />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Mahmud Al Muhaimin
                 </h3>
-                <p className="text-gray-500">Co-founder and Lead Developer</p>
+                <p className="text-gray-500 dark:text-gray-400">Co-founder and Lead Developer</p>
               </div>
             </div>
 
@@ -94,23 +97,23 @@ export default function AboutPage() {
                 />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Adib Azwad
                 </h3>
-                <p className="text-gray-500">Co-founder and Lead Designer</p>
+                <p className="text-gray-500 dark:text-gray-400">Co-founder and Lead Designer</p>
               </div>
             </div>
           </div>
           {/* End Team Members Section */}
 
-          <h2 className="text-3xl font-bold text-gray-900 pt-4">Join Us</h2>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white pt-4">Join Us</h2>
           <p>
             We're always looking for new perspectives. If you're interested in
             writing for us, or just want to share your feedback, don't hesitate
             to{' '}
             <Link
               href="/contact"
-              className="text-blue-600 hover:underline font-medium"
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
               get in touch
             </Link>

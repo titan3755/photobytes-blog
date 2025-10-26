@@ -1,16 +1,14 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { createCategory } from './actions'; // We will add this to actions.ts
+import { createCategory } from './actions';
 
 export default function CategoryForm() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  // --- FIX: Removed 'new' from useTransition ---
   const [isPending, startTransition] = useTransition();
-  // --- END FIX ---
 
   // Helper to generate slug
   const generateSlug = (str: string) => {
@@ -53,7 +51,7 @@ export default function CategoryForm() {
       <div>
         <label
           htmlFor="categoryName"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           Category Name
         </label>
@@ -63,13 +61,13 @@ export default function CategoryForm() {
           value={name}
           onChange={handleNameChange}
           required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"
         />
       </div>
       <div>
         <label
           htmlFor="categorySlug"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           Slug
         </label>
@@ -77,21 +75,21 @@ export default function CategoryForm() {
           type="text"
           id="categorySlug"
           value={slug}
-          onChange={(e) => setSlug(generateSlug(e.target.value))} // Ensure slug is formatted
+          onChange={(e) => setSlug(generateSlug(e.target.value))}
           required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black bg-gray-50"
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black bg-gray-50 dark:bg-gray-600 dark:text-white"
         />
-         <p className="mt-1 text-xs text-gray-500">Auto-generated from name. Must be unique.</p>
+         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Auto-generated from name. Must be unique.</p>
       </div>
       <button
         type="submit"
         disabled={isPending}
-        className="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+        className="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
       >
         {isPending ? 'Adding...' : 'Add New Category'}
       </button>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {success && <p className="text-green-600 text-sm">{success}</p>}
+      {error && <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>}
+      {success && <p className="text-green-600 dark:text-green-400 text-sm">{success}</p>}
     </form>
   );
 }

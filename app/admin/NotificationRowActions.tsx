@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { deleteNotification } from './actions'; // We will add this action
+import { deleteNotification } from './actions';
 
 export default function NotificationRowActions({
   notificationId,
@@ -35,12 +35,12 @@ export default function NotificationRowActions({
       <button
         onClick={handleDelete}
         disabled={isPending}
-        className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
+        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium disabled:opacity-50"
         title="Delete Notification"
       >
         {isPending ? 'Deleting...' : 'Delete'}
       </button>
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {error && <p className="text-red-500 dark:text-red-400 text-xs mt-1">{error}</p>}
     </div>
   );
 }
