@@ -77,7 +77,6 @@ export default function Navbar() {
     };
   }, [dropdownOpen]);
 
-  // --- Theme Toggle Button Component ---
   const renderThemeToggle = () => {
     if (!mounted) {
       return <div className="ml-4 h-9 w-9 p-2" />; // Placeholder
@@ -98,7 +97,6 @@ export default function Navbar() {
     );
   };
 
-  // --- Mobile Theme Toggle ---
   const renderMobileThemeToggle = () => {
      if (!mounted) return null;
      return (
@@ -186,15 +184,7 @@ export default function Navbar() {
             </nav>
             
             {/* --- Auth Section (Desktop) --- */}
-            {/* This is the key fix: We use the 'status' from useSession as a 'key'.
-              When status changes (e.g., 'authenticated' -> 'unauthenticated' on logout),
-              React will *destroy* the old component (with mounted=true) and
-              mount a *new* one (with mounted=false), matching the server render.
-            */}
             <div key={status} className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
-              {/* We also use 'mounted' to prevent rendering the real UI on the 
-                server or on the initial client load, which ensures a match.
-              */}
               {!mounted ? authPlaceholder : (
                 <>
                   {isAuthenticated ? (
@@ -217,7 +207,6 @@ export default function Navbar() {
                         {dropdownOpen && (
                           <div className="absolute right-0 top-full mt-2 w-64 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none">
                             <div className="py-1">
-                              {/* ... dropdown content ... */}
                               <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                                 <div className="flex items-center space-x-3">
                                   <div className="flex-shrink-0">
@@ -236,6 +225,15 @@ export default function Navbar() {
                               <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>
                                 Dashboard
                               </Link>
+                              {/* --- START: Added View Profile Link --- */}
+                              <Link
+                                href="/profile"
+                                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                onClick={() => setDropdownOpen(false)}
+                              >
+                                View Profile
+                              </Link>
+                              {/* --- END: Added View Profile Link --- */}
                               <Link href="/profile/edit" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" onClick={() => setDropdownOpen(false)}>
                                 Edit Profile
                               </Link>
@@ -296,7 +294,7 @@ export default function Navbar() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Image
-                    className="h-[62px] w-auto rounded-full" // Static class is safe
+                    className="h-[62px] w-auto rounded-full"
                     src="/final.svg"
                     alt="PhotoBytes Blog"
                     width={62}
@@ -340,8 +338,7 @@ export default function Navbar() {
                 {renderMobileThemeToggle()}
               </div>
               
-              {/* FIX: Wrap mobile auth section in 'mounted' check */}
-              <div key={status}> {/* Add key here too */}
+              <div key={status}>
                 {!mounted ? (
                   <div className="h-36" /> // Placeholder for auth buttons
                 ) : (
@@ -353,6 +350,13 @@ export default function Navbar() {
                             Dashboard
                           </button>
                         </Link>
+                        {/* --- START: Added View Profile Link (Mobile) --- */}
+                        <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
+                          <button className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                            View Profile
+                          </button>
+                        </Link>
+                        {/* --- END: Added View Profile Link (Mobile) --- */}
                         <Link href="/profile/edit" onClick={() => setMobileMenuOpen(false)}>
                           <button className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                             Edit Profile
@@ -360,18 +364,18 @@ export default function Navbar() {
                         </Link>
                         
                         {session.user.role === Role.ADMIN && (
-                          <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                           <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
                               <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
                                 <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-red-600 hover:bg-red-700">
                                   Admin Panel
                                 </button>
                               </Link>
-                              <Link href="/dev" onClick={() => setMobileMenuOpen(false)}>
+                               <Link href="/dev" onClick={() => setMobileMenuOpen(false)}>
                                 <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-yellow-600 hover:bg-yellow-700">
                                   Dev Page
                                 </button>
                               </Link>
-                          </div>
+                           </div>
                         )}
 
                         <p className="mt-6 text-center text-base font-medium text-gray-500 dark:text-gray-400">
