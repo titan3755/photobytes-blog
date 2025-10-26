@@ -1,8 +1,8 @@
-'use client'; // This component needs to be a client component for image error handling
+'use client';
 
 import Link from 'next/link';
-import type { Article } from '@prisma/client'; // Import the Article type
-import { useState } from 'react';
+import type { Article } from '@prisma/client';
+import { useState, useEffect } from 'react'; // 1. Import useEffect
 
 // A simple placeholder icon for missing images
 function ImageIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -25,7 +25,19 @@ function ImageIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export default function ArticleCard({ article }: { article: Article }) {
-  const [imageError, setImageError] = useState(false); // State to track image loading errors
+  const [imageError, setImageError] = useState(false);
+  // 2. Add state for the formatted date
+  const [formattedDate, setFormattedDate] = useState<string | null>(null);
+
+  // 3. Format the date *only* on the client after the component has mounted
+  useEffect(() => {
+    // This code will only run in the browser, ensuring the locale is consistent
+    setFormattedDate(new Date(article.createdAt).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+    }));
+  }, [article.createdAt]); // Re-run if the article changes
 
   return (
     <Link
@@ -39,7 +51,7 @@ export default function ArticleCard({ article }: { article: Article }) {
             alt={article.title || 'Article image'}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
-            onError={() => setImageError(true)} // Set error state on failure
+            onError={() => setImageError(true)}
             referrerPolicy="no-referrer"
           />
         ) : (
@@ -55,8 +67,12 @@ export default function ArticleCard({ article }: { article: Article }) {
         <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">
           {article.excerpt || 'Read more...'}
         </p>
-        <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          {new Date(article.createdAt).toLocaleDateString()}
+        <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 h-5"> 
+          {/* 4. Render the date from state. It will be blank on server-render
+               and pop in on client-mount, avoiding the mismatch. 
+               Added h-5 to prevent layout shift.
+          */}
+          {formattedDate}
         </div>
       </div>
     </Link>
