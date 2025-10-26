@@ -7,14 +7,16 @@ import {
   UserNotification,
   Notification,
   Comment,
-  Prisma,
+  Prisma, // 1. Import Prisma
 } from '@prisma/client';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar';
 import UserArticleRow from '@/components/dashboard/UserArticleRow';
 import NotificationItem from '@/components/dashboard/NotificationItem';
+// --- START FIX: Import noStore ---
 import { unstable_noStore as noStore } from 'next/cache';
+// --- END FIX ---
 
 // --- 1. Import the new components ---
 import DashboardCard from '@/components/dashboard/DashboardCard';
@@ -34,11 +36,14 @@ type CommentWithArticle = Prisma.CommentGetPayload<{
 }>;
 
 export default async function Dashboard() {
+  // --- START FIX: Force this page to be dynamic ---
   noStore();
+  // --- END FIX ---
   
   const session = await auth();
 
   if (!session?.user?.id) {
+// ... (rest of the file is identical) ...
     console.error('Session or user ID not found, redirecting to login.');
     redirect('/api/auth/signin?error=SessionRequired');
   }
@@ -210,7 +215,14 @@ export default async function Dashboard() {
                 </p>
               )}
             </div>
-            <div className="mt-6 text-right">
+            {/* --- START MODIFICATION: Added flex and View Profile link --- */}
+            <div className="mt-6 flex justify-end gap-3">
+              <Link
+                href="/profile"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
+              >
+                View Profile
+              </Link>
               <Link
                 href="/profile/edit"
                 className="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -218,6 +230,7 @@ export default async function Dashboard() {
                 Edit Profile
               </Link>
             </div>
+            {/* --- END MODIFICATION --- */}
           </DashboardCard>
 
           {/* --- Updated Comments Card --- */}
@@ -250,7 +263,7 @@ export default async function Dashboard() {
           </DashboardCard>
         </div>
 
-        {/* --- 4. REWORKED: Logic for Article/Application sections --- */}
+        {/* --- REWORKED: Logic for Article/Application sections --- */}
         
         {/* If user is Admin or Blogger, show Article Management */}
         {canPostArticles && (
@@ -310,4 +323,3 @@ export default async function Dashboard() {
     </div>
   );
 }
-
