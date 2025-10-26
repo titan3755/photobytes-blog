@@ -19,6 +19,7 @@ import CategoryRowActions from './CategoryRowActions';
 import SendNotificationForm from './SendNotificationForm';
 import NotificationRowActions from './NotificationRowActions';
 import CommentRowActions from './CommentRowActions';
+import AdminStats from './AdminStats'; // Import the new chart component
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -142,10 +143,51 @@ export default async function AdminPage() {
     take: 50,
   });
 
+  // --- 2. Process Data for Charts ---
+  
+  // Daily Signups (Last 7 days)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  const signupsByDay = allUsers
+    .filter(user => new Date(user.createdAt) > sevenDaysAgo)
+    .reduce((acc, user) => {
+      const day = new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      acc[day] = (acc[day] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+  // Create a map of the last 7 days
+  const last7DaysMap = new Map<string, number>();
+  for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dayKey = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      last7DaysMap.set(dayKey, signupsByDay[dayKey] || 0);
+  }
+  const dailySignups = Array.from(last7DaysMap, ([name, users]) => ({ name, users }));
+
+  // Content Breakdown
+  const contentBreakdown = [
+    { name: 'Articles', count: totalArticles },
+    { name: 'Comments', count: totalComments },
+    { name: 'Categories', count: allCategories.length },
+  ];
+
+  // Application Status
+  const approved = bloggerApplications.filter(a => a.status === 'APPROVED').length;
+  const rejected = bloggerApplications.filter(a => a.status === 'REJECTED').length;
+  const applicationData = [
+    { name: 'PENDING', count: pendingApplicationsCount },
+    { name: 'APPROVED', count: approved },
+    { name: 'REJECTED', count: rejected },
+  ].filter(d => d.count > 0);
+
+  // --- End Data Processing ---
+
 
   return (
-    // Page container inherits bg-gray-50/dark:bg-gray-900 from layout
-    <div className="min-h-screen w-full p-4 md:p-8">
+    <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 p-4 md:p-8 min-w-screen flex flex-col items-center justify-center">
       <div className="max-w-7xl w-full mx-auto space-y-12">
         <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white">
           Admin Control Panel
@@ -166,6 +208,13 @@ export default async function AdminPage() {
             value={pendingApplicationsCount}
           />
         </div>
+
+        {/* --- 3. Render the new Stats Component --- */}
+        <AdminStats
+            dailySignups={dailySignups}
+            contentBreakdown={contentBreakdown}
+            applicationData={applicationData}
+        />
         
          {/* --- Category Management Section --- */}
          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
@@ -384,115 +433,32 @@ export default async function AdminPage() {
 
         {/* --- Contact Message Management Table --- */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
-    Contact Messages
-  </h2>
-  <div className="overflow-x-auto">
-    <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
-      <thead className="bg-gray-50 dark:bg-gray-700">
-        <tr>
-          <th
-            scope="col"
-            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >
-            Received
-          </th>
-          <th
-            scope="col"
-            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >
-            From
-          </th>
-          <th
-            scope="col"
-            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >
-            Email
-          </th>
-          <th
-            scope="col"
-            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >
-            Message
-          </th>
-          <th
-            scope="col"
-            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >
-            Status
-          </th>
-          <th
-            scope="col"
-            className="relative px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-          >
-            Actions
-          </th>
-        </tr>
-      </thead>
-      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-        {contactMessages.length > 0 ? (
-          contactMessages.map((message) => (
-            <tr
-              key={message.id}
-              className={`${
-                message.isRead ? 'opacity-70 dark:opacity-60' : 'font-semibold'
-              } hover:bg-gray-50 dark:hover:bg-gray-700`}
-            >
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                {new Date(message.createdAt).toLocaleString()}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900 dark:text-white">
-                  {message.name}
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <a
-                  href={`mailto:${message.email}`}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  {message.email}
-                </a>
-              </td>
-              <td className="px-6 py-4 max-w-sm">
-                <p
-                  className="text-sm text-gray-700 dark:text-gray-300 truncate"
-                  title={message.message}
-                >
-                  {message.message}
-                </p>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span
-                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    message.isRead
-                      ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-                      : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 animate-pulse'
-                  }`}
-                >
-                  {message.isRead ? 'Read' : 'Unread'}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <ContactMessageRowActions message={message} />
-              </td>
-            </tr>
-          ))
-        ) : (
-          <tr>
-            <td
-              colSpan={6}
-              className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
-            >
-              No contact messages received yet.
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-</div>
-
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Contact Messages </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Received</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Message</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th><th scope="col" className="relative px-6 py-3 text-right">Actions</th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{
+                contactMessages.length > 0 ? (
+                  contactMessages.map((message) => (
+                    <tr key={message.id} className={`${message.isRead ? 'opacity-70 dark:opacity-60' : 'font-semibold'} hover:bg-gray-50 dark:hover:bg-gray-700`}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(message.createdAt).toLocaleString()}</td>
+                      <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900 dark:text-white">{message.name}</div></td>
+                      <td className="px-6 py-4 whitespace-nowrap"><a href={`mailto:${message.email}`} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">{message.email}</a></td>
+                      <td className="px-6 py-4 max-w-sm">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={message.message}>
+                            {message.message}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap"> <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${message.isRead ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 animate-pulse'}`}> {message.isRead ? 'Read' : 'Unread'} </span> </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <ContactMessageRowActions message={message} />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No contact messages received yet.</td></tr>
+                )
+              }</tbody></table>
+            </div>
+        </div>
       </div>
     </div>
   );

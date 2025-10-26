@@ -9,7 +9,7 @@ export default function AuthProvider({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="data-theme" defaultTheme="system">
       <SessionProvider>{children}</SessionProvider>
     </ThemeProvider>
   );

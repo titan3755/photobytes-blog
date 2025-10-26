@@ -56,7 +56,7 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -89,10 +89,10 @@ export default function Navbar() {
         aria-label="Toggle dark mode"
         onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       >
-        {theme === 'dark' ? (
-          <Sun className="h-5 w-5" />
+        {resolvedTheme === 'dark' ? (
+          <Sun className="h-5 w-5" /> // Show Sun in dark mode
         ) : (
-          <Moon className="h-5 w-5" />
+          <Moon className="h-5 w-5" /> // Show Moon in light mode
         )}
       </button>
     );
@@ -110,7 +110,11 @@ export default function Navbar() {
             setMobileMenuOpen(false);
           }}
         >
-          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          {resolvedTheme === 'dark' ? (
+            <Sun className="h-5 w-5" />
+          ) : (
+            <Moon className="h-5 w-5" />
+          )}
           <span>Toggle Theme</span>
         </button>
      );
