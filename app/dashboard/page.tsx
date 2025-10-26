@@ -7,80 +7,35 @@ import {
   UserNotification,
   Notification,
   Comment,
+  Prisma,
 } from '@prisma/client';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar';
 import UserArticleRow from '@/components/dashboard/UserArticleRow';
 import NotificationItem from '@/components/dashboard/NotificationItem';
+import { unstable_noStore as noStore } from 'next/cache';
 
-// --- Reusable Card Component (Now with dark mode) ---
-function DashboardCard({
-  title,
-  children,
-  className = '',
-}: {
-  title: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 ${className}`}
-    >
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">{title}</h2>
-      {children}
-    </div>
-  );
-}
+// --- 1. Import the new components ---
+import DashboardCard from '@/components/dashboard/DashboardCard';
+import ApplicationStatusDisplay from '@/components/dashboard/ApplicationStatusDisplay';
 
-// Helper for status badges in dashboard (Now with dark mode)
-function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
-  let bgColor = 'bg-gray-100';
-  let textColor = 'text-gray-800';
-  let darkBgColor = 'dark:bg-gray-700';
-  let darkTextColor = 'dark:text-gray-200';
-  let message = 'Your application status: ';
+// --- 2. REMOVED the local DashboardCard function ---
 
-  if (status === ApplicationStatus.PENDING) {
-    bgColor = 'bg-yellow-100';
-    textColor = 'text-yellow-800';
-    darkBgColor = 'dark:bg-yellow-900';
-    darkTextColor = 'dark:text-yellow-300';
-    message = 'Your blogger application is currently pending review.';
-  } else if (status === ApplicationStatus.APPROVED) {
-    bgColor = 'bg-green-100';
-    textColor = 'text-green-800';
-    darkBgColor = 'dark:bg-green-900';
-    darkTextColor = 'dark:text-green-300';
-    message = 'Congratulations! Your blogger application has been approved.';
-  } else if (status === ApplicationStatus.REJECTED) {
-    bgColor = 'bg-red-100';
-    textColor = 'text-red-800';
-    darkBgColor = 'dark:bg-red-900';
-    darkTextColor = 'dark:text-red-300';
-    message =
-      'Your blogger application was reviewed but not approved at this time.';
+// --- 3. REMOVED the local ApplicationStatusDisplay function ---
+
+// Define the type for the comment query
+type CommentWithArticle = Prisma.CommentGetPayload<{
+  include: { 
+    article: { 
+      select: { title: true, slug: true }
+    }
   }
-
-  return (
-    <div className="text-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-      <p className="text-gray-700 dark:text-gray-300 mb-2">{message}</p>
-      <span
-        className={`px-3 py-1 text-sm font-semibold rounded-full ${bgColor} ${textColor} ${darkBgColor} ${darkTextColor}`}
-      >
-        {status}
-      </span>
-      {status === ApplicationStatus.REJECTED && (
-        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          Please contact support if you have questions.
-        </p>
-      )}
-    </div>
-  );
-}
+}>;
 
 export default async function Dashboard() {
+  noStore();
+  
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -89,7 +44,7 @@ export default async function Dashboard() {
   }
 
   const userId = session.user.id;
-  const userRole = session.user.role;
+  const userRole = session.user.role; // This will now be fresh
   const canPostArticles = userRole === Role.ADMIN || userRole === Role.BLOGGER;
 
   // --- Fetch Notifications ---
@@ -105,7 +60,7 @@ export default async function Dashboard() {
   });
   const unreadCount = userNotifications.filter((n) => !n.isRead).length;
 
-  // --- Fetch Articles ---
+  // --- Fetch Articles (if user is blogger/admin) ---
   let userArticles: Article[] = [];
   if (canPostArticles) {
     userArticles = await prisma.article.findMany({
@@ -114,31 +69,36 @@ export default async function Dashboard() {
     });
   }
 
-  // --- Fetch Application Status ---
+  // --- 3. REWORKED: Fetch Application Status *only if needed* ---
   let applicationStatus: ApplicationStatus | null = null;
   if (userRole === Role.USER) {
+    // Only query the application status if the user is still a 'USER'
     const application = await prisma.bloggerApplication.findUnique({
       where: { userId: userId },
       select: { status: true },
     });
     applicationStatus = application?.status ?? null;
   }
+  // --- END REWORK ---
 
   // --- Fetch Recent Comments ---
-  const userComments = await prisma.comment.findMany({
+  const userComments: CommentWithArticle[] = await prisma.comment.findMany({
     where: { authorId: userId },
     orderBy: { createdAt: 'desc' },
-    take: 5, // Get 5 most recent comments
+    take: 5,
     include: {
       article: {
-        // Include article title and slug
         select: { title: true, slug: true },
       },
     },
   });
+  
+  // Safely create the joinedDate string
+  const joinedDate = session.user.createdAt 
+    ? new Date(session.user.createdAt).toLocaleDateString() 
+    : null;
 
   return (
-    // Applied the UI workaround classes here (dark mode inherited from layout)
     <div className="min-h-screen w-full p-8 min-w-screen flex flex-col items-center justify-center">
       <div className="max-w-4xl w-full mx-auto space-y-8">
         {/* Welcome Header */}
@@ -243,10 +203,10 @@ export default async function Dashboard() {
                   {userRole}
                 </span>
               </p>
-              {session.user.createdAt && (
+              {joinedDate && (
                 <p>
                   <span className="font-semibold">Joined:</span>{' '}
-                  {new Date(session.user.createdAt).toLocaleDateString()}
+                  {joinedDate}
                 </p>
               )}
             </div>
@@ -262,40 +222,37 @@ export default async function Dashboard() {
 
           {/* --- Updated Comments Card --- */}
           <DashboardCard title="Your Recent Comments" className="md:col-span-1">
-            {userComments.length > 0 ? (
-              <ul className="space-y-3 max-h-64 overflow-y-auto">
-                {userComments.map((comment) => (
-                  <li
-                    key={comment.id}
-                    className="border-b border-gray-200 dark:border-gray-700 pb-3 last:border-b-0"
-                  >
-                    <p
-                      className="text-gray-700 dark:text-gray-300 text-sm truncate"
-                      title={comment.content}
-                    >
-                      {comment.content}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      On:{' '}
-                      <Link
-                        href={`/blog/${comment.article.slug}`}
-                        className="text-blue-600 dark:text-blue-400 hover:underline"
-                      >
-                        {comment.article.title}
-                      </Link>
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                You haven&apos;t posted any comments yet.
-              </p>
-            )}
+             {userComments.length > 0 ? (
+                <ul className="space-y-3 max-h-64 overflow-y-auto">
+                    {userComments.map(comment => (
+                        <li key={comment.id} className="border-b border-gray-200 dark:border-gray-700 pb-3 last:border-b-0">
+                             <p className="text-gray-700 dark:text-gray-300 text-sm truncate" title={comment.content}>
+                                {comment.content}
+                             </p>
+                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                On: 
+                                {comment.article ? (
+                                  <Link href={`/blog/${comment.article.slug}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                                    {comment.article.title}
+                                  </Link>
+                                ) : (
+                                  <span className="italic text-gray-400 dark:text-gray-500">Article not found</span>
+                                )}
+                             </p>
+                        </li>
+                    ))}
+                </ul>
+             ) : (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                    You haven&apos;t posted any comments yet.
+                </p>
+             )}
           </DashboardCard>
         </div>
 
-        {/* --- Article Management Section (Conditional) --- */}
+        {/* --- 4. REWORKED: Logic for Article/Application sections --- */}
+        
+        {/* If user is Admin or Blogger, show Article Management */}
         {canPostArticles && (
           <DashboardCard
             title="Your Articles"
@@ -323,7 +280,7 @@ export default async function Dashboard() {
           </DashboardCard>
         )}
 
-        {/* --- Apply for Blogger Role Section / Status Display (Conditional) --- */}
+        {/* If user is just a USER, show the Application Status card */}
         {userRole === Role.USER && (
           <DashboardCard
             title="Blogger Application"
@@ -353,3 +310,4 @@ export default async function Dashboard() {
     </div>
   );
 }
+

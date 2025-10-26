@@ -5,7 +5,6 @@ import prisma from '@/lib/prisma';
 import { Role, ApplicationStatus } from '@prisma/client';
 import { auth } from '@/auth';
 
-// --- Category Actions ---
 // ... (createCategory, deleteCategory, getCategories) ...
 export async function createCategory(data: { name: string, slug: string }) {
     const session = await auth();
@@ -71,7 +70,6 @@ export async function getCategories() {
 }
 
 // --- User Actions ---
-// ... (toggleCommentStatus, updateUserRole, deleteUser) ...
 export async function toggleCommentStatus(
   userId: string,
   currentStatus: boolean
@@ -89,13 +87,22 @@ export async function toggleCommentStatus(
       where: { id: userId },
       data: { canComment: newStatus },
     });
+    
+    // --- START FIX: Delete the user's session(s) ---
+    await prisma.session.deleteMany({
+      where: { userId: userId },
+    });
+    // --- END FIX ---
+
     revalidatePath('/admin');
+    revalidatePath('/dashboard');
     return { success: true, message: `User commenting ${newStatus ? 'enabled' : 'disabled'}.` };
   } catch (error) {
     console.error('Error toggling comment status:', error);
     return { success: false, message: 'An internal error occurred.' };
   }
 }
+
 export async function updateUserRole(userId: string, newRole: Role) {
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') {
@@ -109,13 +116,22 @@ export async function updateUserRole(userId: string, newRole: Role) {
       where: { id: userId },
       data: { role: newRole },
     });
+    
+    // --- START FIX: Delete the user's session(s) ---
+    await prisma.session.deleteMany({
+      where: { userId: userId },
+    });
+    // --- END FIX ---
+
     revalidatePath('/admin');
+    revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
     console.error('Error updating user role:', error);
     return { success: false, message: 'Failed to update user role.' };
   }
 }
+
 export async function deleteUser(userId: string) {
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') {
@@ -125,8 +141,10 @@ export async function deleteUser(userId: string) {
     throw new Error('Admin cannot delete their own account.');
   }
   try {
+    // Deleting the user will cascade-delete their sessions, so no extra code needed here
     await prisma.user.delete({ where: { id: userId } });
     revalidatePath('/admin');
+    revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
     console.error('Error deleting user:', error);
@@ -172,7 +190,6 @@ export async function deleteContactMessage(messageId: string) {
 }
 
 // --- Blogger Application Actions ---
-// ... (approveBloggerApplication, rejectBloggerApplication) ...
 export async function approveBloggerApplication(
   applicationId: string,
   userId: string
@@ -192,24 +209,40 @@ export async function approveBloggerApplication(
         data: { role: Role.BLOGGER },
       }),
     ]);
+
+    // --- START FIX: Delete the user's session(s) ---
+    await prisma.session.deleteMany({
+      where: { userId: userId },
+    });
+    // --- END FIX ---
+
     revalidatePath('/admin');
+    revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
     console.error('Error approving application:', error);
     return { success: false, message: 'Failed to approve application.' };
   }
 }
+
 export async function rejectBloggerApplication(applicationId: string) {
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') {
     throw new Error('Not authorized');
   }
   try {
-    await prisma.bloggerApplication.update({
+    const app = await prisma.bloggerApplication.update({
       where: { id: applicationId },
       data: { status: ApplicationStatus.REJECTED },
     });
+
+    // Also delete session on rejection (for consistency)
+    await prisma.session.deleteMany({
+      where: { userId: app.userId },
+    });
+
     revalidatePath('/admin');
+    revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
     console.error('Error rejecting application:', error);
@@ -303,6 +336,7 @@ export async function sendNotification(data: SendNotificationData): Promise<{ su
             skipDuplicates: true,
         });
         revalidatePath('/admin');
+        revalidatePath('/dashboard'); 
         return { success: true, message: `Notification sent to ${targetUserIds.length} user(s).` };
     } catch (error) {
         console.error('Error sending notification:', error);
@@ -354,7 +388,8 @@ export async function deleteNotification(notificationId: string) {
     }
 }
 
-// --- START: New Comment Action ---
+// --- Comment Action ---
+// ... (deleteComment) ...
 export async function deleteComment(commentId: string) {
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') {
@@ -362,7 +397,6 @@ export async function deleteComment(commentId: string) {
   }
 
   try {
-    // We need to find the article slug *before* deleting
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
       select: { article: { select: { slug: true } } },
@@ -374,7 +408,6 @@ export async function deleteComment(commentId: string) {
 
     revalidatePath('/admin');
     revalidatePath('/dashboard');
-    // Revalidate the specific article page
     if (comment?.article?.slug) {
         revalidatePath(`/blog/${comment.article.slug}`);
     }
@@ -384,4 +417,4 @@ export async function deleteComment(commentId: string) {
     return { success: false, message: 'Failed to delete comment.' };
   }
 }
-// --- END: New Comment Action ---
+

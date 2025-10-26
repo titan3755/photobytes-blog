@@ -17,7 +17,7 @@ type Props = {
   editor: Editor | null;
 };
 
-// ... (ToolbarButton component remains the same) ...
+// Reusable Button Component with dark mode styles
 const ToolbarButton = ({
   onClick,
   isActive,
@@ -35,8 +35,10 @@ const ToolbarButton = ({
     type="button"
     onClick={onClick}
     disabled={isDisabled}
-    className={`p-2 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-      isActive ? 'bg-gray-300 text-black' : 'text-gray-600'
+    className={`p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed ${
+      isActive
+        ? 'bg-gray-300 text-black dark:bg-gray-600 dark:text-white' // Active styles
+        : 'text-gray-600 dark:text-gray-400' // Inactive styles
     }`}
     aria-label={label}
     title={label}
@@ -59,7 +61,7 @@ export default function Toolbar({ editor }: Props) {
     }
   };
 
-   // --- START: Updated Add Video Handler ---
+   // --- Add Video Handler (using iframe for YouTube/Vimeo) ---
    const addVideo = () => {
      const url = window.prompt('Enter YouTube Video URL:'); // Only ask for YouTube URL
      if (url) {
@@ -67,16 +69,11 @@ export default function Toolbar({ editor }: Props) {
         // This command will parse the URL and insert the embed correctly
         editor.chain().focus().setYoutubeVideo({
             src: url,
-            // You can set width/height here if you want
-            // width: 640, 
-            // height: 480,
         }).run();
      }
    };
-   // --- END: Updated Add Video Handler ---
    
   const setLink = () => {
-    // ... (logic remains the same)
     const previousUrl = editor.getAttributes('link').href;
     const url = window.prompt('Enter Link URL:', previousUrl || '');
     if (url === null) return;
@@ -88,8 +85,8 @@ export default function Toolbar({ editor }: Props) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1 md:gap-2 p-2 border-b border-gray-300 bg-gray-50 rounded-t-lg">
-      {/* ... (All other buttons remain the same) ... */}
+    <div className="flex flex-wrap items-center gap-1 md:gap-2 p-2 border-b border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-lg">
+      {/* --- Standard Formatting --- */}
       <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} label="Bold" isDisabled={!editor.can().toggleBold()}> <Bold className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} label="Italic" isDisabled={!editor.can().toggleItalic()}> <Italic className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} label="Underline" isDisabled={!editor.can().toggleUnderline()}> <UnderlineIcon className="h-4 w-4" /> </ToolbarButton>
@@ -99,29 +96,50 @@ export default function Toolbar({ editor }: Props) {
        <ToolbarButton onClick={() => editor.chain().focus().toggleSuperscript().run()} isActive={editor.isActive('superscript')} label="Superscript" isDisabled={!editor.can().toggleSuperscript()}> <SuperscriptIcon className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={setLink} isActive={editor.isActive('link')} label="Set Link" isDisabled={!editor.can().setLink({href:''})}> <LinkIcon className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().unsetLink().run()} isActive={false} label="Unset Link" isDisabled={!editor.isActive('link')}> <Link2Off className="h-4 w-4" /> </ToolbarButton>
-      <div className="w-[1px] h-6 bg-gray-300 mx-1 hidden md:block"></div>
+      
+      {/* Separator */}
+      <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-700 mx-1 hidden md:block"></div>
+
+      {/* --- Headings --- */}
       <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive('heading', { level: 1 })} label="Heading 1"> <Heading1 className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} isActive={editor.isActive('heading', { level: 2 })} label="Heading 2"> <Heading2 className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} isActive={editor.isActive('heading', { level: 3 })} label="Heading 3"> <Heading3 className="h-4 w-4" /> </ToolbarButton>
-       <div className="w-[1px] h-6 bg-gray-300 mx-1 hidden md:block"></div>
+      
+       {/* Separator */}
+       <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-700 mx-1 hidden md:block"></div>
+
+      {/* --- Lists --- */}
       <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} label="Bullet List" isDisabled={!editor.can().toggleBulletList()}> <List className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} label="Ordered List" isDisabled={!editor.can().toggleOrderedList()}> <ListOrdered className="h-4 w-4" /> </ToolbarButton>
-      <div className="w-[1px] h-6 bg-gray-300 mx-1 hidden md:block"></div>
-       <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} label="Align Left" isDisabled={!editor.can().setTextAlign('left')}> <AlignLeft className="h-4 w-4" /> </ToolbarButton>
+      
+      {/* Separator */}
+      <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-700 mx-1 hidden md:block"></div>
+
+       {/* --- Alignment --- */}
+      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} label="Align Left" isDisabled={!editor.can().setTextAlign('left')}> <AlignLeft className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })} label="Align Center" isDisabled={!editor.can().setTextAlign('center')}> <AlignCenter className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })} label="Align Right" isDisabled={!editor.can().setTextAlign('right')}> <AlignRight className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} isActive={editor.isActive({ textAlign: 'justify' })} label="Align Justify" isDisabled={!editor.can().setTextAlign('justify')}> <AlignJustify className="h-4 w-4" /> </ToolbarButton>
-      <div className="w-[1px] h-6 bg-gray-300 mx-1 hidden md:block"></div>
+
+      {/* Separator */}
+      <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-700 mx-1 hidden md:block"></div>
+
+      {/* --- Block Elements --- */}
       <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} label="Blockquote" isDisabled={!editor.can().toggleBlockquote()}> <Quote className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} isActive={editor.isActive('codeBlock')} label="Code Block" isDisabled={!editor.can().toggleCodeBlock()}> <Code className="h-4 w-4" /> </ToolbarButton>
        <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} isActive={false} label="Horizontal Rule" isDisabled={!editor.can().setHorizontalRule()}> <HorizontalRuleIcon className="h-4 w-4" /> </ToolbarButton>
+      
+      {/* --- Media --- */}
       <ToolbarButton onClick={addImage} isActive={false} label="Add Image"> <ImageIcon className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={addVideo} isActive={false} label="Embed Video"> <VideoIcon className="h-4 w-4" /> </ToolbarButton>
-       <div className="w-[1px] h-6 bg-gray-300 mx-1 hidden md:block"></div>
+      
+       {/* Separator */}
+       <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-700 mx-1 hidden md:block"></div>
+
+       {/* --- Clear Formatting & History --- */}
        <ToolbarButton onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} isActive={false} label="Clear Formatting"> <RemoveFormatting className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().undo().run()} isActive={false} label="Undo" isDisabled={!editor.can().undo()}> <Undo className="h-4 w-4" /> </ToolbarButton>
       <ToolbarButton onClick={() => editor.chain().focus().redo().run()} isActive={false} label="Redo" isDisabled={!editor.can().redo()}> <Redo className="h-4 w-4" /> </ToolbarButton>
     </div>
   );
 }
-

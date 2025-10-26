@@ -39,8 +39,7 @@ const TiptapEditor = ({ content, onChange }: TiptapProps) => {
       extensions: [
         StarterKit.configure({
           heading: { levels: [1, 2, 3] },
-          // --- FIX: Removed horizontalRule: true ---
-          // It is included by default in StarterKit
+          // horizontalRule is included by default
         }),
         Image.configure({ inline: false }),
         Underline,
@@ -56,13 +55,16 @@ const TiptapEditor = ({ content, onChange }: TiptapProps) => {
         Highlight.configure({ multicolor: true }),
         Subscript,
         Superscript,
-        Youtube.configure({ controls: true }), // Add Youtube here
+        Youtube.configure({ controls: true }),
       ],
-      content: content || '', // Use initial content or empty string
+      content: content || '',
       editorProps: {
         attributes: {
+          // --- START FIX: Removed conflicting bg-white, dark:bg-gray-700, text-black, and dark:text-white ---
+          // The prose classes and the parent div will handle all colors.
           class:
-            'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none p-4 min-h-[300px] w-full !text-black bg-white',
+            'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl dark:prose-invert focus:outline-none p-4 min-h-[300px] w-full',
+          // --- END FIX ---
         },
       },
       onUpdate({ editor }) {
@@ -74,7 +76,6 @@ const TiptapEditor = ({ content, onChange }: TiptapProps) => {
     setEditorInstance(editor);
 
     if (content) {
-      // If initial content exists (like on edit page)
       initialContentSet.current = true;
     }
 
@@ -95,17 +96,20 @@ const TiptapEditor = ({ content, onChange }: TiptapProps) => {
       !initialContentSet.current &&
       content !== editorRef.current.getHTML()
     ) {
-      // This block runs when content is fetched asynchronously (e.g., on edit page)
       editorRef.current.commands.setContent(content, { emitUpdate: false });
       initialContentSet.current = true;
     }
+    // This else-if block is likely unnecessary for the edit page
+    // else if (editorRef.current && !content && initialContentSet.current && editorRef.current.getHTML() !== '<p></p>') {
+    //   editorRef.current.commands.clearContent(false);
+    // }
   }, [content]); // Run whenever the 'content' prop changes
 
   if (!editorInstance) {
     return (
-      <div className="flex flex-col border border-gray-300 rounded-lg">
-        <div className="flex flex-wrap items-center gap-2 p-2 border-b border-gray-300 bg-gray-100 rounded-t-lg min-h-[44px]"></div>
-        <div className="p-4 border-t-0 border border-gray-300 rounded-b-md min-h-[300px] bg-white text-gray-400 italic">
+      <div className="flex flex-col border border-gray-300 dark:border-gray-700 rounded-lg">
+        <div className="flex flex-wrap items-center gap-2 p-2 border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 rounded-t-lg min-h-[44px]"></div>
+        <div className="p-4 border-t-0 border-gray-300 dark:border-gray-700 rounded-b-md min-h-[300px] bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500 italic">
           Loading editor...
         </div>
       </div>
@@ -113,9 +117,9 @@ const TiptapEditor = ({ content, onChange }: TiptapProps) => {
   }
 
   return (
-    <div className="flex flex-col border border-gray-300 rounded-lg bg-white overflow-hidden">
+    <div className="flex flex-col border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 overflow-hidden">
       <Toolbar editor={editorInstance} />
-      <div className="flex-grow border-t border-gray-300">
+      <div className="flex-grow border-t border-gray-300 dark:border-gray-700">
         <EditorContent editor={editorInstance} className="h-full" />
       </div>
     </div>
@@ -123,3 +127,4 @@ const TiptapEditor = ({ content, onChange }: TiptapProps) => {
 };
 
 export default TiptapEditor;
+

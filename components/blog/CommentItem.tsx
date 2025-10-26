@@ -20,20 +20,16 @@ export default function CommentItem({ comment }: CommentItemProps) {
           alt={comment.author.name || comment.author.username || 'User Avatar'}
         />
       </div>
-      {/* --- START FIX: Added min-w-0 to allow text wrapping in flexbox --- */}
       <div className="flex-1 min-w-0">
-      {/* --- END FIX --- */}
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-bold text-gray-900 truncate"> {/* Added truncate as a safeguard */}
+          <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">
             {comment.author.name || comment.author.username || 'User'}
           </h4>
-          <time className="text-xs text-gray-500 flex-shrink-0 ml-2"> {/* Added margin */}
+          <time className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2">
             {new Date(comment.createdAt).toLocaleDateString()}
           </time>
         </div>
-        {/* --- START FIX: Added break-words to force long strings to wrap --- */}
-        <p className="mt-1 text-md text-gray-700 whitespace-pre-wrap break-words">
-        {/* --- END FIX --- */}
+        <p className="mt-1 text-md text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
           {comment.content}
         </p>
       </div>

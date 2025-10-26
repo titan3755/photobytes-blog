@@ -6,6 +6,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcrypt';
 import type { Role } from '@prisma/client';
 import { NextResponse } from 'next/server';
+import { unstable_noStore as noStore } from 'next/cache';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -38,6 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     // --- START FIX: Changed if(user) to if(user?.id) ---
     async jwt({ token, user }) {
+      noStore(); 
       // Check for user AND user.id
       if (user?.id) { // 'user' is only available on sign-in and has a defined id
         token.id = user.id; // Now this is type-safe
@@ -50,6 +52,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // @ts-ignore
         token.createdAt = user.createdAt;
       }
+
+      if (token.id) {
+         const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: {
+            role: true,
+            username: true,
+            name: true,
+            email: true,
+            image: true,
+            createdAt: true,
+            canComment: true,
+      },
+        });
+         if (dbUser) {
+          // Update the token with the fresh data
+          token.role = dbUser.role;
+          token.username = dbUser.username;
+          token.name = dbUser.name;
+          token.email = dbUser.email;
+          token.picture = dbUser.image;
+          token.createdAt = dbUser.createdAt;
+          token.canComment = dbUser.canComment;
+        }
+      }
+      
       return token;
     },
     // --- END FIX ---

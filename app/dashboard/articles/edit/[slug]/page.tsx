@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+// import { useSession } from 'next-auth/react'; // No longer needed
+import { useRouter, useParams } from 'next/navigation'; // 1. Import useParams
 import Link from 'next/link';
 import TiptapEditor from '@/components/editor/TiptapEditor';
 import { updateArticle, fetchArticleForEdit } from './actions';
@@ -19,7 +20,7 @@ const EditArticlePage = () => {
   const router = useRouter();
 
   // --- State Definitions ---
-  const [article, setArticle] = useState<ArticleWithCategories | null>(null); // Use updated type
+  const [article, setArticle] = useState<ArticleWithCategories | null>(null);
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -89,19 +90,19 @@ const EditArticlePage = () => {
 
 
   // Helper functions
-  const generateSlug = (str: string) => { /* ... */
-      return str
+  const generateSlug = (str: string) => {
+    return str
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/[\s-]+/g, '-');
    };
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => { /* ... */
-      const newTitle = e.target.value;
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
     setTitle(newTitle);
    };
-  const handleContentChange = (newContent: string) => { /* ... */
-      setContent(newContent);
+  const handleContentChange = (newContent: string) => {
+     setContent(newContent);
    };
    
   // --- New Category Checkbox Handler ---
@@ -150,60 +151,60 @@ const EditArticlePage = () => {
   // --- Loading/Error State ---
   if (isLoading || isLoadingCategories) { // Check both loading states
     return (
-      <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
-        <p className="text-gray-500 text-lg animate-pulse">Loading article...</p>
+      <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 p-8 min-w-screen flex flex-col items-center justify-center">
+        <p className="text-gray-500 dark:text-gray-400 text-lg animate-pulse">Loading article...</p>
       </div>
     );
   }
   if (error || !article) {
       return (
-          <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center text-center">
-              <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Article</h2>
-              <p className="text-red-500 mb-6">{error || 'Article could not be loaded or you are not authorized.'}</p>
-              <Link href="/dashboard" className="mt-4 text-blue-600 hover:underline">&larr; Go back to Dashboard</Link>
+          <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 p-8 min-w-screen flex flex-col items-center justify-center text-center">
+              <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Error Loading Article</h2>
+              <p className="text-red-500 dark:text-red-400 mb-6">{error || 'Article could not be loaded or you are not authorized.'}</p>
+              <Link href="/dashboard" className="mt-4 text-blue-600 dark:text-blue-400 hover:underline">&larr; Go back to Dashboard</Link>
           </div>
       );
   }
 
   // --- Main Return ---
   return (
-    <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
-      <div className="max-w-4xl w-full mx-auto bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">
+    <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 p-8 min-w-screen flex flex-col items-center justify-center">
+      <div className="max-w-4xl w-full mx-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
           Edit Article: {title}
         </h1>
 
         <form className="space-y-6">
           {/* Title */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700"> Title <span className="text-red-500">*</span> </label>
-            <input type="text" id="title" value={title} onChange={handleTitleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"/>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300"> Title <span className="text-red-500">*</span> </label>
+            <input type="text" id="title" value={title} onChange={handleTitleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"/>
           </div>
 
           {/* Slug (Editable) */}
           <div>
-            <label htmlFor="slug" className="block text-sm font-medium text-gray-700"> Slug (URL) <span className="text-red-500">*</span> </label>
-            <input type="text" id="slug" value={slug} onChange={(e) => setSlug(generateSlug(e.target.value))} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 text-black bg-gray-50"/>
-            <p className="mt-1 text-xs text-gray-500">Must be unique.</p>
+            <label htmlFor="slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300"> Slug (URL) <span className="text-red-500">*</span> </label>
+            <input type="text" id="slug" value={slug} onChange={(e) => setSlug(generateSlug(e.target.value))} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 text-black bg-gray-50 dark:bg-gray-600 dark:text-white"/>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Must be unique.</p>
           </div>
 
           {/* Featured Image URL (Optional) */}
            <div>
-            <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700"> Featured Image URL (Optional) </label>
-            <input type="url" id="featuredImage" value={featuredImage} onChange={(e) => setFeaturedImage(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black" placeholder="https://example.com/image.jpg"/>
+            <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700 dark:text-gray-300"> Featured Image URL (Optional) </label>
+            <input type="url" id="featuredImage" value={featuredImage} onChange={(e) => setFeaturedImage(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black" placeholder="https://example.com/image.jpg"/>
           </div>
 
           {/* Excerpt (Optional) */}
            <div>
-            <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700"> Excerpt (Optional) </label>
-            <textarea id="excerpt" rows={3} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black" placeholder="A short summary for the article preview..."/>
+            <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300"> Excerpt (Optional) </label>
+            <textarea id="excerpt" rows={3} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black" placeholder="A short summary for the article preview..."/>
           </div>
 
           {/* --- START: Categories Selection (Populated) --- */}
            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Categories</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categories</label>
                 {allCategories.length > 0 ? (
-                    <div className="mt-2 space-y-2 border border-gray-200 rounded-md p-4 max-h-40 overflow-y-auto">
+                    <div className="mt-2 space-y-2 border border-gray-200 dark:border-gray-600 rounded-md p-4 max-h-40 overflow-y-auto">
                         {allCategories.map((category) => (
                             <div key={category.id} className="flex items-center">
                                 <input
@@ -211,19 +212,18 @@ const EditArticlePage = () => {
                                     name="categories"
                                     type="checkbox"
                                     value={category.id}
-                                    // Use selectedCategoryIds to set checked state
                                     checked={selectedCategoryIds.includes(category.id)}
                                     onChange={() => handleCategoryChange(category.id)}
-                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    className="h-4 w-4 text-blue-600 dark:text-blue-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-500 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800"
                                 />
-                                <label htmlFor={`category-${category.id}`} className="ml-3 block text-sm text-gray-700">
+                                <label htmlFor={`category-${category.id}`} className="ml-3 block text-sm text-gray-700 dark:text-gray-300">
                                     {category.name}
                                 </label>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <p className="text-sm text-gray-500 italic">No categories found. <Link href="/admin" className="text-blue-600 hover:underline">Create categories</Link> in the admin panel.</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 italic">No categories found. <Link href="/admin" className="text-blue-600 dark:text-blue-400 hover:underline">Create categories</Link> in the admin panel.</p>
                 )}
            </div>
            {/* --- END: Categories Selection (Populated) --- */}
@@ -231,29 +231,29 @@ const EditArticlePage = () => {
 
           {/* Tiptap Editor */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Content <span className="text-red-500">*</span>
             </label>
              <TiptapEditor
-                key={article.id} // Key ensures editor re-initializes if slug changes (though not ideal)
+                key={article.id} // Re-mounts editor when article changes
                 content={content}
                 onChange={handleContentChange}
             />
           </div>
 
           {/* Error/Success Messages */}
-          {error && !isLoading && <p className="text-red-600 text-sm">{error}</p>}
-          {success && <p className="text-green-600 text-sm">{success}</p>}
+          {error && !isLoading && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
+          {success && <p className="text-green-600 dark:text-green-400 text-sm">{success}</p>}
 
           {/* Action Buttons */}
           <div className="flex justify-between gap-4 pt-4">
-             <Link href="/dashboard" className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"> Cancel </Link>
+             <Link href="/dashboard" className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"> Cancel </Link>
              <div className="flex justify-end gap-4">
                 <button
                 type="button"
                 onClick={() => handleSave(false)}
                 disabled={isPending || isLoading}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                 >
                 {isPending ? 'Saving Draft...' : 'Save Draft'}
                 </button>
@@ -261,7 +261,7 @@ const EditArticlePage = () => {
                 type="button"
                 onClick={() => handleSave(true)}
                 disabled={isPending || isLoading}
-                className="inline-flex justify-center py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="inline-flex justify-center py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                 >
                 {isPending ? 'Publishing...' : 'Update & Publish'}
                 </button>

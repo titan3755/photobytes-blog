@@ -41,10 +41,10 @@ export default function SuggestedArticleCard({ article }: CardProps) {
   return (
     <Link
       href={`/blog/${article.slug}`}
-      className="block group rounded-lg shadow-lg overflow-hidden bg-white hover:shadow-xl transition-shadow duration-300"
+      className="block group rounded-lg shadow-lg overflow-hidden bg-white dark:bg-gray-800 hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300"
     >
       {/* Image container */}
-      <div className="relative w-full h-32 bg-gray-200">
+      <div className="relative w-full h-32 bg-gray-200 dark:bg-gray-700">
         {article.featuredImage && !imageError ? (
           <img
             src={article.featuredImage}
@@ -52,23 +52,24 @@ export default function SuggestedArticleCard({ article }: CardProps) {
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             onError={() => setImageError(true)}
-            referrerPolicy="no-referrer" // Helps with loading images from other domains
+            referrerPolicy="no-referrer"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ImageIcon className="h-10 w-10 text-gray-400" />
+            <ImageIcon className="h-10 w-10 text-gray-400 dark:text-gray-500" />
           </div>
         )}
       </div>
       {/* Text Content */}
       <div className="p-4">
-        <h3 className="text-md font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
+        <h3 className="text-md font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
           {article.title}
         </h3>
-        <time className="text-xs text-gray-500">
+        <time className="text-xs text-gray-500 dark:text-gray-400">
           {new Date(article.createdAt).toLocaleDateString()}
         </time>
       </div>
     </Link>
   );
 }
+
