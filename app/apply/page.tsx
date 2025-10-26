@@ -8,32 +8,40 @@ import { ApplicationStatus, Role } from '@prisma/client'; // Import Role
 
 // Helper component to display status (similar to dashboard)
 function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
-  // ... (Component remains the same) ...
   let bgColor = 'bg-gray-100';
   let textColor = 'text-gray-800';
+  let darkBgColor = 'dark:bg-gray-700';
+  let darkTextColor = 'dark:text-gray-200';
   let message = 'Your application status: ';
+
   if (status === ApplicationStatus.PENDING) {
     bgColor = 'bg-yellow-100';
     textColor = 'text-yellow-800';
+    darkBgColor = 'dark:bg-yellow-900';
+    darkTextColor = 'dark:text-yellow-300';
     message =
       'Your application is currently pending review. We will notify you once a decision is made.';
   } else if (status === ApplicationStatus.APPROVED) {
     bgColor = 'bg-green-100';
     textColor = 'text-green-800';
+    darkBgColor = 'dark:bg-green-900';
+    darkTextColor = 'dark:text-green-300';
     message =
       'Congratulations! Your blogger application has been approved. You can now start creating articles from your dashboard.';
   } else if (status === ApplicationStatus.REJECTED) {
     bgColor = 'bg-red-100';
     textColor = 'text-red-800';
+    darkBgColor = 'dark:bg-red-900';
+    darkTextColor = 'dark:text-red-300';
     message =
       'Your application was reviewed but not approved at this time.';
   }
 
   return (
-    <div className="text-center p-6 rounded-lg border bg-white shadow-sm">
-      <p className="text-gray-700 text-lg mb-4">{message}</p>
+    <div className="text-center p-6 rounded-lg border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
+      <p className="text-gray-700 dark:text-gray-300 text-lg mb-4">{message}</p>
       <span
-        className={`px-4 py-1.5 text-md font-semibold rounded-full ${bgColor} ${textColor}`}
+        className={`px-4 py-1.5 text-md font-semibold rounded-full ${bgColor} ${textColor} ${darkBgColor} ${darkTextColor}`}
       >
         {status}
       </span>
@@ -41,7 +49,7 @@ function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
         <p className="mt-6">
           <Link
             href="/dashboard"
-            className="text-blue-600 hover:underline"
+            className="text-blue-600 dark:text-blue-400 hover:underline"
           >
             &larr; Back to Dashboard
           </Link>
@@ -55,15 +63,15 @@ function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {
 function AlreadyBloggerOrAdminDisplay({ role }: { role: Role }) {
   const roleName = role === Role.ADMIN ? 'Admin' : 'Blogger';
   return (
-    <div className="text-center p-6 rounded-lg border bg-white shadow-sm">
-      <p className="text-gray-700 text-lg mb-4">
+    <div className="text-center p-6 rounded-lg border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
+      <p className="text-gray-700 dark:text-gray-300 text-lg mb-4">
         As an <strong className="font-semibold">{roleName}</strong>, you already
         have publishing privileges.
       </p>
       <p className="mt-6">
         <Link
           href="/dashboard"
-          className="text-blue-600 hover:underline"
+          className="text-blue-600 dark:text-blue-400 hover:underline"
         >
           &larr; Back to Dashboard
         </Link>
@@ -133,10 +141,11 @@ export default function ApplyPage() {
   }, [session, sessionStatus, isAuthenticated, router, isLoadingStatus, userRole]); // Added userRole
 
   const handleSubmit = async (e: React.FormEvent) => {
-    // ... (handleSubmit logic remains the same) ...
     e.preventDefault();
     if (!isAuthenticated) {
-      /* ... */ return;
+      setSubmitMessage('You must be logged in to apply.');
+      setSubmitStatus('error');
+      return;
     }
     // Prevent Admins/Bloggers from submitting via form manipulation
     if (userRole !== Role.USER) {
@@ -145,7 +154,9 @@ export default function ApplyPage() {
       return;
     }
     if (!reason || !topics) {
-      /* ... */ return;
+      setSubmitMessage('Please fill in all required fields.');
+      setSubmitStatus('error');
+      return;
     }
 
     setIsSubmitting(true);
@@ -153,7 +164,6 @@ export default function ApplyPage() {
     setSubmitMessage('');
 
     try {
-      // ... (fetch logic remains the same) ...
       const response = await fetch('/api/apply', {
         method: 'POST',
         headers: {
@@ -171,7 +181,6 @@ export default function ApplyPage() {
       );
       setApplicationStatus(ApplicationStatus.PENDING);
     } catch (err: any) {
-      // ... (error handling remains the same) ...
       console.error('Application submission error:', err);
       setSubmitStatus('error');
       setSubmitMessage(err.message || 'Failed to submit application.');
@@ -181,12 +190,11 @@ export default function ApplyPage() {
   };
 
   // --- Combined Loading / Unauthenticated Check ---
-  // Apply the workaround classes here for loading/unauth states
   if (sessionStatus === 'loading' || isLoadingStatus) {
     return (
-      <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
+      <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 p-8 min-w-screen flex flex-col items-center justify-center">
         <div className="max-w-3xl w-full text-center">
-          <p className="text-gray-500 text-lg animate-pulse">
+          <p className="text-gray-500 dark:text-gray-400 text-lg animate-pulse">
             Loading application status...
           </p>
         </div>
@@ -195,12 +203,12 @@ export default function ApplyPage() {
   }
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
+      <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 p-8 min-w-screen flex flex-col items-center justify-center">
         <div className="max-w-3xl w-full text-center">
-          <p className="text-red-500">Please log in to apply.</p>
+          <p className="text-red-500 dark:text-red-400">Please log in to apply.</p>
           <Link
             href="/login?callbackUrl=/apply"
-            className="ml-2 text-blue-600 hover:underline"
+            className="ml-2 text-blue-600 dark:text-blue-400 hover:underline"
           >
             Login
           </Link>
@@ -210,9 +218,8 @@ export default function ApplyPage() {
   }
 
   // --- Render based on application status OR user role ---
-  // Apply the workaround classes to the main return div
   return (
-    <div className="min-h-screen w-full bg-gray-50 p-8 min-w-screen flex flex-col items-center justify-center">
+    <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 p-8 min-w-screen flex flex-col items-center justify-center">
       <div className="max-w-3xl w-full space-y-8">
         {userRole === Role.ADMIN || userRole === Role.BLOGGER ? (
           // If user is already Admin or Blogger, show message
@@ -222,13 +229,12 @@ export default function ApplyPage() {
           <ApplicationStatusDisplay status={applicationStatus} />
         ) : (
           // If USER has no application, show the form
-          <div className="bg-white p-10 rounded-xl shadow-lg border border-gray-200">
-            {/* ... (Form remains exactly the same as before) ... */}
+          <div className="bg-white dark:bg-gray-800 p-10 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
             <div className="text-center">
-              <h1 className="text-4xl font-extrabold text-gray-900">
+              <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">
                 Apply to be a Blogger
               </h1>
-              <p className="mt-4 text-lg text-gray-600">
+              <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
                 Share your expertise with the PhotoBytes community! Fill out the
                 form below to apply.
               </p>
@@ -238,7 +244,7 @@ export default function ApplyPage() {
                 <div>
                   <label
                     htmlFor="name"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     Your Name
                   </label>
@@ -247,13 +253,13 @@ export default function ApplyPage() {
                     type="text"
                     value={name}
                     readOnly
-                    className="mt-1 block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 bg-gray-100 cursor-not-allowed text-gray-700 focus:outline-none"
+                    className="mt-1 block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 bg-gray-100 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400 cursor-not-allowed focus:outline-none"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     Your Email
                   </label>
@@ -262,14 +268,14 @@ export default function ApplyPage() {
                     type="email"
                     value={email}
                     readOnly
-                    className="mt-1 block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 bg-gray-100 cursor-not-allowed text-gray-700 focus:outline-none"
+                    className="mt-1 block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 bg-gray-100 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400 cursor-not-allowed focus:outline-none"
                   />
                 </div>
               </div>
               <div>
                 <label
                   htmlFor="reason"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   Why do you want to be a blogger for PhotoBytes?{' '}
                   <span className="text-red-500">*</span>
@@ -280,14 +286,14 @@ export default function ApplyPage() {
                   required
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  className="mt-1 block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+                  className="mt-1 block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                   placeholder="Tell us about your interest and motivation..."
                 />
               </div>
               <div>
                 <label
                   htmlFor="topics"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   What topics would you like to write about?{' '}
                   <span className="text-red-500">*</span>
@@ -298,14 +304,14 @@ export default function ApplyPage() {
                   required
                   value={topics}
                   onChange={(e) => setTopics(e.target.value)}
-                  className="mt-1 block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+                  className="mt-1 block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                   placeholder="e.g., Photography techniques, web development tutorials, tech reviews..."
                 />
               </div>
               <div>
                 <label
                   htmlFor="sampleUrl"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   Link to Sample Work (Optional)
                 </label>
@@ -314,10 +320,10 @@ export default function ApplyPage() {
                   type="url"
                   value={sampleUrl}
                   onChange={(e) => setSampleUrl(e.target.value)}
-                  className="mt-1 block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-900"
+                  className="mt-1 block w-full px-4 py-3 rounded-md shadow-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 focus:ring-blue-500 text-gray-900"
                   placeholder="e.g., Your personal blog, portfolio, GitHub..."
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Provide a link to your previous writing or relevant projects
                   if available.
                 </p>
@@ -326,7 +332,7 @@ export default function ApplyPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting || submitStatus === 'success'}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Application'}
                 </button>
@@ -335,19 +341,19 @@ export default function ApplyPage() {
                 <p
                   className={`text-center text-sm font-medium ${
                     submitStatus === 'success'
-                      ? 'text-green-600'
-                      : 'text-red-600'
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
                   }`}
                 >
                   {submitMessage}
                 </p>
               )}
             </form>
-            <p className="text-center text-sm text-gray-600 mt-6">
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
               Changed your mind?{' '}
               <Link
                 href="/dashboard"
-                className="text-blue-600 hover:underline"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
               >
                 Go back to Dashboard
               </Link>
