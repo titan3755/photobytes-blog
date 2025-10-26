@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation'; // Import useSearchParams
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useEffect } from 'react'; // Import useEffect
+import { useEffect } from 'react';
 
 // Copied GoogleIcon from register page
 const GoogleIcon = () => (
@@ -86,75 +86,86 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen min-w-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-md">
-        <h1 className="text-2xl text-black font-bold text-center mb-6">Login</h1>
+    // Use the main page background from layout
+    <div className="min-h-screen min-w-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white text-center mb-6">
+          Login to your Account
+        </h1>
 
-        {error && <p className="text-center text-red-500 mb-4">{error}</p>}
+        {error && <p className="text-center text-red-500 dark:text-red-400 mb-4">{error}</p>}
         {successMessage && (
-          <p className="text-center text-green-600 mb-4">{successMessage}</p>
+          <p className="text-center text-green-600 dark:text-green-400 mb-4">{successMessage}</p>
         )}
 
-        {/* Social Logins - Styled like register page */}
+        {/* Social Logins */}
         <div className="space-y-3 mb-6">
           <button
             onClick={() => handleSocialLogin('google')}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <GoogleIcon />
-            {isLoading ? 'Loading...' : 'Continue with Google'}
+            <span className="font-medium">Continue with Google</span>
           </button>
           <button
             onClick={() => handleSocialLogin('facebook')}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FacebookIcon />
-            {isLoading ? 'Loading...' : 'Continue with Facebook'}
+            <span className="font-medium">Continue with Facebook</span>
           </button>
         </div>
 
         <div className="flex items-center my-4">
-          <div className="flex-grow border-t border-gray-300"></div>
-          <span className="mx-3 text-sm text-gray-500">or</span>
-          <div className="flex-grow border-t border-gray-300"></div>
+          <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+          <span className="mx-3 text-sm text-gray-500 dark:text-gray-400">or</span>
+          <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
         </div>
 
         {/* Credentials Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Combined Email/Username Field */}
-          <input
-            type="text" // Changed type to text
-            placeholder="Email or Username" // Updated placeholder
-            value={loginId}
-            onChange={(e) => setLoginId(e.target.value)}
-            required
-            disabled={isLoading}
-            className="w-full px-4 py-2 text-black border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100" // Matched border
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={isLoading}
-            className="w-full px-4 py-2 text-black border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100" // Matched border
-          />
+          <div>
+            <label htmlFor="loginId" className="sr-only">Email or Username</label>
+            <input
+              id="loginId"
+              type="text"
+              placeholder="Email or Username"
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
+              required
+              disabled={isLoading}
+              className="w-full px-4 py-3 text-black dark:text-white bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:border-indigo-500 disabled:bg-gray-100 dark:disabled:bg-gray-600"
+            />
+          </div>
+          <div>
+            <label htmlFor="password_login" className="sr-only">Password</label>
+            <input
+              id="password_login" // Changed id to be unique from register page
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+              className="w-full px-4 py-3 text-black dark:text-white bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:border-indigo-500 disabled:bg-gray-100 dark:disabled:bg-gray-600"
+            />
+          </div>
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed" // Matched button color
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        <p className="text-center text-sm text-gray-600 mt-4">
+        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
           Don&apos;t have an account?{' '}
           <Link
             href="/register"
-            className={`font-medium text-blue-600 hover:underline ${
+            className={`font-medium text-indigo-600 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300 ${
               isLoading ? 'pointer-events-none' : ''
             }`}
           >

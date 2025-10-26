@@ -19,7 +19,7 @@ interface NotificationItemProps {
 function NotificationIcon() {
   return (
     <svg
-      className="h-6 w-6 text-blue-500"
+      className="h-6 w-6 text-blue-500 dark:text-blue-400"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -53,13 +53,13 @@ export default function NotificationItem({ item }: NotificationItemProps) {
   // Helper to render the main content
   const renderContent = () => (
     <div className="flex-1">
-      <p className="text-sm font-semibold text-gray-900">
+      <p className="text-sm font-semibold text-gray-900 dark:text-white">
         {item.notification.title}
       </p>
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-gray-600 dark:text-gray-300">
         {item.notification.description}
       </p>
-      <p className="text-xs text-gray-400 mt-1">
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
         {new Date(item.notification.createdAt).toLocaleString()}
       </p>
     </div>
@@ -69,8 +69,8 @@ export default function NotificationItem({ item }: NotificationItemProps) {
     <li
       className={`flex items-start gap-4 p-4 rounded-lg transition-colors ${
         item.isRead
-          ? 'bg-white hover:bg-gray-50'
-          : 'bg-blue-50 border border-blue-200 hover:bg-blue-100'
+          ? 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50' // Read state
+          : 'bg-blue-50 dark:bg-gray-700 border border-blue-200 dark:border-gray-600 hover:bg-blue-100 dark:hover:bg-gray-600' // Unread state
       } ${isPending ? 'opacity-50' : ''}`}
     >
       <div className="flex-shrink-0 mt-1">
@@ -103,7 +103,7 @@ export default function NotificationItem({ item }: NotificationItemProps) {
             onClick={handleMarkAsRead}
             disabled={isPending}
             title="Mark as read"
-            className="w-3 h-3 bg-blue-500 rounded-full hover:bg-blue-700 focus:outline-none"
+            className="w-3 h-3 bg-blue-500 rounded-full hover:bg-blue-700 dark:bg-blue-400 dark:hover:bg-blue-300 focus:outline-none"
           />
         </div>
       )}

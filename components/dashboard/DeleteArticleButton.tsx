@@ -40,7 +40,7 @@ export default function DeleteArticleButton({
         {isPending ? 'Deleting...' : 'Delete'}
       </button>
       {/* Optionally display error below button */}
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {error && <p className="text-red-500 dark:text-red-400 text-xs mt-1">{error}</p>}
     </div>
   );
 }

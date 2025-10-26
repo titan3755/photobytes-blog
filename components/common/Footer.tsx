@@ -42,7 +42,7 @@ export default function Footer() {
                 alt="PhotoBytes Studios logo"
                 width={32}
                 height={32}
-                className="h-8 w-8"
+                className="h-8 w-8 rounded-full"
                 unoptimized={true}
               />
               <span className="self-center text-2xl font-semibold whitespace-nowrap text-gray-900 dark:text-white">

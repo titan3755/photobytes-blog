@@ -135,6 +135,7 @@ export default function Navbar() {
                   alt="PhotoBytes Blog"
                   width={60}
                   height={60}
+                  className="rounded-full"
                 />
                 <span className="ml-4 text-2xl font-bold text-gray-900 dark:text-white md:hidden">
                   PhotoBytes Blog
@@ -318,7 +319,7 @@ export default function Navbar() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Image
-                    className="h-[62px] w-auto"
+                    className="h-[62px] w-auto rounded-full"
                     src="/final.svg"
                     alt="PhotoBytes Blog"
                     width={62}
