@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
-// --- START FIX: Import Prisma enum ---
 import { Article, Prisma } from '@prisma/client';
-// --- END FIX ---
 import ArticleCard from '@/components/home/ArticleCard';
-import SearchBar from '@/components/home/SearchBar'; // 1. Import the new SearchBar
+import SearchBar from '@/components/home/SearchBar';
+import PaginationControls from '@/components/home/PaginationControls'; // 1. Import Pagination
 
 export const metadata: Metadata = {
   title: 'Home | PhotoBytes Studios',
@@ -13,31 +12,46 @@ export const metadata: Metadata = {
     'Welcome to the PhotoBytes Blog, your source for the latest news and updates.',
 };
 
-// 2. Accept searchParams as a prop
+// --- START: Pagination & Search Params ---
 export default async function Home({
   searchParams,
 }: {
-  searchParams?: { search?: string };
+  searchParams?: { 
+    search?: string;
+    page?: string; // 2. Accept 'page'
+  };
 }) {
   
-  // 3. Get the search query from the URL
   const searchQuery = searchParams?.search || '';
+  const currentPage = Number(searchParams?.page) || 1; // 3. Get current page, default to 1
+  const pageSize = 6; // 4. Define how many articles per page
+  const skip = (currentPage - 1) * pageSize; // 5. Calculate offset
 
-  // 4. Create a dynamic where clause for Prisma
+  // 6. Define the where clause for both search and filtering
   const whereClause = {
     published: true,
     title: {
       contains: searchQuery,
-      // --- START FIX: Use Prisma.QueryMode enum ---
-      mode: Prisma.QueryMode.insensitive, // 'insensitive' ignores case
-      // --- END FIX ---
+      mode: Prisma.QueryMode.insensitive,
     },
   };
 
-  const articles = await prisma.article.findMany({
-    where: whereClause, // 5. Apply the where clause
-    orderBy: { createdAt: 'desc' },
-  });
+  // 7. Fetch articles and total count *in parallel* for performance
+  const [articles, totalCount] = await prisma.$transaction([
+    prisma.article.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'desc' },
+      take: pageSize, // 8. Use 'take' to get only one page
+      skip: skip,      // 9. Use 'skip' to offset to the correct page
+    }),
+    prisma.article.count({
+      where: whereClause,
+    })
+  ]);
+
+  // 10. Calculate total pages
+  const totalPages = Math.ceil(totalCount / pageSize);
+  // --- END: Pagination & Search Params ---
 
   return (
     <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 p-8 min-w-screen flex flex-col items-center justify-center">
@@ -55,20 +69,19 @@ export default async function Home({
         </section>
         
         <section className="w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          {/* 6. Add the SearchBar component */}
           <SearchBar />
 
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-            {/* 7. Make title dynamic */}
             {searchQuery ? `Search Results for "${searchQuery}"` : 'Latest Articles'}
           </h2>
+          
+          {/* Article Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {articles.length > 0 ? (
               articles.map((article) => (
                 <ArticleCard key={article.id} article={article} />
               ))
             ) : (
-              // 8. Update the "no articles" message
               <p className="text-gray-500 dark:text-gray-400 col-span-full text-center py-10">
                 {searchQuery
                   ? 'No articles found matching your search. Try another term!'
@@ -76,6 +89,15 @@ export default async function Home({
               </p>
             )}
           </div>
+          
+          {/* --- 11. Add Pagination Controls --- */}
+          {totalPages > 1 && (
+            <PaginationControls 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+            />
+          )}
+
         </section>
       </div>
     </div>
