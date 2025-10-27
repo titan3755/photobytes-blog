@@ -7,6 +7,8 @@ import {
   UserNotification,
   Notification,
   Comment,
+  Order,        // 1. Import Order
+  OrderStatus,
   Prisma, // 1. Import Prisma
 } from '@prisma/client';
 import Link from 'next/link';
@@ -25,6 +27,30 @@ import ApplicationStatusDisplay from '@/components/dashboard/ApplicationStatusDi
 // --- 2. REMOVED the local DashboardCard function ---
 
 // --- 3. REMOVED the local ApplicationStatusDisplay function ---
+function OrderStatusBadge({ status }: { status: OrderStatus }) {
+  let colors = '';
+  switch (status) {
+    case 'PENDING':
+      colors = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      break;
+    case 'IN_PROGRESS':
+      colors = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      break;
+    case 'COMPLETED':
+      colors = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      break;
+    case 'CANCELLED':
+      colors = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      break;
+    default:
+      colors = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+  }
+  return (
+    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colors}`}>
+      {status.replace('_', ' ')}
+    </span>
+  );
+}
 
 // Define the type for the comment query
 type CommentWithArticle = Prisma.CommentGetPayload<{
@@ -97,6 +123,12 @@ export default async function Dashboard() {
       },
     },
   });
+
+  const userOrders = await prisma.order.findMany({
+    where: { authorId: userId },
+    orderBy: { createdAt: 'desc' },
+    take: 5,
+  });
   
   // Safely create the joinedDate string
   const joinedDate = session.user.createdAt 
@@ -168,6 +200,49 @@ export default async function Dashboard() {
               You have no new notifications.
             </p>
           )}
+        </DashboardCard>
+
+        <DashboardCard title="Your Recent Orders" className="md:col-span-2">
+          {userOrders.length > 0 ? (
+            <ul className="space-y-4">
+              {userOrders.map((order) => (
+                <li
+                  key={order.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border dark:border-gray-700"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {order.category}
+                    </p>
+                    <p
+                      className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-md"
+                      title={order.description}
+                    >
+                      {order.description}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Submitted: {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 ml-4">
+                    <OrderStatusBadge status={order.status} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+              You haven't placed any orders yet.
+            </p>
+          )}
+          <div className="mt-6 text-right">
+            <Link
+              href="/order"
+              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors"
+            >
+              Place a New Order
+            </Link>
+          </div>
         </DashboardCard>
 
         {/* Grid Layout for Cards */}

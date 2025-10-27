@@ -9,6 +9,8 @@ import {
   Category,
   Notification,
   Comment,
+  Order,
+  OrderStatus,
 } from '@prisma/client';
 import UserRowActions from './UserRowActions';
 import ContactMessageRowActions from './ContactMessageRowActions';
@@ -19,6 +21,7 @@ import CategoryRowActions from './CategoryRowActions';
 import SendNotificationForm from './SendNotificationForm';
 import NotificationRowActions from './NotificationRowActions';
 import CommentRowActions from './CommentRowActions';
+import OrderRowActions from './OrderRowActions';
 import AdminStats from './AdminStats'; // Import the new chart component
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
@@ -83,6 +86,31 @@ function ArticleStatusBadge({ published }: { published: boolean }) {
   );
 }
 
+function OrderStatusBadge({ status }: { status: OrderStatus }) {
+  let colors = '';
+  switch (status) {
+    case 'PENDING':
+      colors = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      break;
+    case 'IN_PROGRESS':
+      colors = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      break;
+    case 'COMPLETED':
+      colors = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      break;
+    case 'CANCELLED':
+      colors = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      break;
+    default:
+      colors = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+  }
+  return (
+    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colors}`}>
+      {status.replace('_', ' ')}
+    </span>
+  );
+}
+
 
 export default async function AdminPage() {
   const session = await auth();
@@ -143,6 +171,15 @@ export default async function AdminPage() {
     take: 50,
   });
 
+  const totalOrders = await prisma.order.count();
+  const pendingOrders = await prisma.order.count({ where: { status: 'PENDING' }});
+  const allOrders = await prisma.order.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      author: { select: { name: true, username: true, email: true } }
+    }
+  });
+
   // --- 2. Process Data for Charts ---
   
   // Daily Signups (Last 7 days)
@@ -193,20 +230,15 @@ export default async function AdminPage() {
           Admin Control Panel
         </h1>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <StatCard title="Total Users" value={totalUsers} />
           <StatCard title="Total Articles" value={totalArticles} />
-          <StatCard
-            title="Published Articles"
-            value={publishedArticlesCount}
-          />
-           <StatCard title="Total Comments" value={totalComments} />
+          <StatCard title="Total Comments" value={totalComments} />
+          <StatCard title="Total Orders" value={totalOrders} />
+          <StatCard title="Pending Orders" value={pendingOrders} />
+          <StatCard title="Pending Applications" value={pendingApplicationsCount} />
           <StatCard title="Unread Messages" value={unreadMessagesCount} />
-          <StatCard
-            title="Pending Applications"
-            value={pendingApplicationsCount}
-          />
+          <StatCard title="Published Articles" value={publishedArticlesCount} />
         </div>
 
         {/* --- 3. Render the new Stats Component --- */}
@@ -293,6 +325,56 @@ export default async function AdminPage() {
               }</tbody></table>
           </div>
         </div>
+
+        {/* --- 6. START: New Order Management Table --- */}
+         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+              Order Management
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Budget</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+                  </tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{
+                  allOrders.length > 0 ? (
+                    allOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                           {new Date(order.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{order.author?.name || order.author?.username}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{order.author?.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                          {order.category}
+                        </td>
+                        <td className="px-6 py-4 max-w-sm">
+                           <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={order.description}>{order.description}</p>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {order.budget || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                           <OrderStatusBadge status={order.status} />
+                        </td>
+                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                           <OrderRowActions order={order} />
+                         </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr><td colSpan={7} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No orders found.</td></tr>
+                  )
+                }</tbody></table>
+            </div>
+         </div>
+         {/* --- END: New Order Management Table --- */}
 
          {/* --- All Articles Management Table --- */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">

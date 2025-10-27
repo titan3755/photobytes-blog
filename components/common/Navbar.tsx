@@ -173,14 +173,12 @@ export default function Navbar() {
               <Link href="/contact" className="text-base font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
                 Contact
               </Link>
-              <a
+              <Link
+                href="/order"
                 className="text-base font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                target="_blank"
-                href="https://www.facebook.com/PhotoBytes999"
-                rel="noopener noreferrer"
               >
                 Order
-              </a>
+              </Link>
             </nav>
             
             {/* --- Auth Section (Desktop) --- */}
@@ -326,9 +324,13 @@ export default function Navbar() {
                 <Link href="/contact" className="text-base font-medium text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
                   Contact
                 </Link>
-                <a className="text-base font-medium text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300" target="_blank" href="https://www.facebook.com/PhotoBytes999" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)}>
+                <Link
+                  href="/order"
+                  className="text-base font-medium text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   Order
-                </a>
+                </Link>
                 <Link href="/about" className="text-base font-medium text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
                   About Us
                 </Link>

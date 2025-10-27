@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
-import { Role, ApplicationStatus } from '@prisma/client';
+import { Role, ApplicationStatus, OrderStatus } from '@prisma/client';
 import { auth } from '@/auth';
 
 // ... (createCategory, deleteCategory, getCategories) ...
@@ -415,6 +415,48 @@ export async function deleteComment(commentId: string) {
   } catch (error) {
     console.error('Error deleting comment:', error);
     return { success: false, message: 'Failed to delete comment.' };
+  }
+}
+
+export async function updateOrderStatus(
+  orderId: string,
+  newStatus: OrderStatus
+) {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    return { success: false, message: 'Not authorized.' };
+  }
+
+  try {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: newStatus },
+    });
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    return { success: false, message: 'Failed to update status.' };
+  }
+}
+
+export async function deleteOrder(
+  orderId: string
+): Promise<{ success: boolean; message?: string }> {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    return { success: false, message: 'Not authorized.' };
+  }
+
+  try {
+    await prisma.order.delete({
+      where: { id: orderId },
+    });
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    return { success: false, message: 'Failed to delete order.' };
   }
 }
 

@@ -7,6 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// --- ENUMS ---
+
 enum Role {
   USER
   ADMIN
@@ -19,6 +21,15 @@ enum ApplicationStatus {
   REJECTED
 }
 
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// --- AUTHENTICATION MODELS ---
+
 model User {
   id                 String               @id @default(cuid())
   name               String?
@@ -29,13 +40,15 @@ model User {
   image              String?
   role               Role                 @default(USER)
   createdAt          DateTime             @default(now())
-  canComment         Boolean              @default(true) // 1. Add this field
+  canComment         Boolean              @default(true) // For comment moderation
+  
   accounts           Account[]
   sessions           Session[]
   articles           Article[]
   bloggerApplication BloggerApplication?
-  userNotifications  UserNotification[]
-  comments           Comment[] // Relation to user's comments
+  userNotifications  UserNotification[] // Relation to user's notifications
+  comments           Comment[]            // Relation to user's comments
+  orders             Order[]              // Relation to user's orders
 }
 
 model Account {
@@ -51,7 +64,8 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([provider, providerAccountId])
 }
 
@@ -67,84 +81,37 @@ model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
+
   @@unique([identifier, token])
 }
 
+
+// --- BLOG MODELS ---
+
 model Article {
-  id             String    @id @default(cuid())
-  title          String
-  slug           String    @unique // For a clean URL, e.g., /blog/my-first-post
-  content        String
-  excerpt        String?   // A short summary for blog feed
-  featuredImage  String?   // URL for a cover image
-  published      Boolean   @default(false) // To save as draft
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  authorId       String
-  author         User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  categories     Category[]
-  comments       Comment[]
+  id            String     @id @default(cuid())
+  title         String
+  slug          String     @unique
+  content       String     @db.Text
+  excerpt       String?
+  featuredImage String?
+  published     Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  authorId      String
+  author        User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  categories    Category[]
+  comments      Comment[]
 }
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  slug      String    @unique
-  articles  Article[]
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  articles Article[]
 }
-
-model ContactMessage {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  message   String
-  createdAt DateTime @default(now())
-  isRead    Boolean  @default(false)
-  ipAddress String?
-}
-
-model BloggerApplication {
-  id        String   @id @default(cuid())
-  userId    String   @unique // Each user can only apply once
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reason    String   // Why they want to be a blogger
-  topics    String   // What topics they want to write about
-  sampleUrl String?  // Optional link to sample work
-  status    ApplicationStatus @default(PENDING) // Track application status
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// --- START: New Notification Models ---
-
-// The notification message itself
-model Notification {
-  id                String             @id @default(cuid())
-  title             String
-  description       String
-  url               String? // Optional link (e.g., /blog/new-feature)
-  createdAt         DateTime           @default(now())
-  
-  // Relation to all users who received this
-  userNotifications UserNotification[]
-}
-
-// Join table to link notifications to users and track read status
-model UserNotification {
-  id             String       @id @default(cuid())
-  isRead         Boolean      @default(false)
-
-  // Relation to User
-  userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Relation to Notification
-  notificationId String
-  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, notificationId]) // A user can only receive the same notification once
-}
-// --- END: New Notification Models ---
 
 model Comment {
   id        String   @id @default(cuid())
@@ -152,14 +119,82 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relation to User (Author)
   authorId  String
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  // Relation to Article
   articleId String
   article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
   @@index([authorId])
   @@index([articleId])
+}
+
+
+// --- APPLICATION MODELS ---
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+  isRead    Boolean  @default(false)
+  ipAddress String?
+}
+
+model BloggerApplication {
+  id        String            @id @default(cuid())
+  userId    String            @unique
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason    String            @db.Text
+  topics    String            @db.Text
+  sampleUrl String?
+  status    ApplicationStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  category    String      
+  description String      @db.Text
+  budget      String?     
+  deadline    String?     
+  
+  status      OrderStatus @default(PENDING)
+  
+  authorId    String
+  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+}
+
+
+// --- NOTIFICATION MODELS ---
+
+model Notification {
+  id                String             @id @default(cuid())
+  title             String
+  description       String
+  url               String?
+  createdAt         DateTime           @default(now())
+  
+  userNotifications UserNotification[]
+}
+
+model UserNotification {
+  id             String       @id @default(cuid())
+  isRead         Boolean      @default(false)
+
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, notificationId])
+  @@index([userId]) // Add index for faster lookups
 }
