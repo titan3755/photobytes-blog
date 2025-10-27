@@ -23,34 +23,12 @@ import { unstable_noStore as noStore } from 'next/cache';
 // --- 1. Import the new components ---
 import DashboardCard from '@/components/dashboard/DashboardCard';
 import ApplicationStatusDisplay from '@/components/dashboard/ApplicationStatusDisplay';
+import DashboardOrderActions from '@/components/dashboard/DashboardOrderActions';
 
 // --- 2. REMOVED the local DashboardCard function ---
 
 // --- 3. REMOVED the local ApplicationStatusDisplay function ---
-function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  let colors = '';
-  switch (status) {
-    case 'PENDING':
-      colors = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      break;
-    case 'IN_PROGRESS':
-      colors = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      break;
-    case 'COMPLETED':
-      colors = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      break;
-    case 'CANCELLED':
-      colors = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      break;
-    default:
-      colors = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-  }
-  return (
-    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colors}`}>
-      {status.replace('_', ' ')}
-    </span>
-  );
-}
+
 
 // Define the type for the comment query
 type CommentWithArticle = Prisma.CommentGetPayload<{
@@ -225,7 +203,8 @@ export default async function Dashboard() {
                     </p>
                   </div>
                   <div className="flex-shrink-0 ml-4">
-                    <OrderStatusBadge status={order.status} />
+                    {/* 5. Use the new Client Component */}
+                    <DashboardOrderActions order={order} />
                   </div>
                 </li>
               ))}

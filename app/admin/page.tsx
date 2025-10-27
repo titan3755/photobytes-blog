@@ -23,6 +23,7 @@ import NotificationRowActions from './NotificationRowActions';
 import CommentRowActions from './CommentRowActions';
 import OrderRowActions from './OrderRowActions';
 import AdminStats from './AdminStats'; // Import the new chart component
+import AdminOrderMessageButton from './AdminOrderMessageButton';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -180,6 +181,27 @@ export default async function AdminPage() {
     }
   });
 
+  const activeOrders = await prisma.order.findMany({
+    where: {
+      OR: [
+        { status: 'PENDING' },
+        { status: 'IN_PROGRESS' },
+        { messages: { some: { isReadByAdmin: false, sender: { role: { not: 'ADMIN' } } } } }
+      ]
+    },
+    include: {
+      author: { select: { name: true, username: true } },
+      _count: {
+        select: {
+          // Count unread messages *from the user*
+          messages: { where: { isReadByAdmin: false, sender: { role: { not: 'ADMIN' } } } }
+        }
+      }
+    },
+    orderBy: { updatedAt: 'desc' },
+    take: 10,
+  });
+
   // --- 2. Process Data for Charts ---
   
   // Daily Signups (Last 7 days)
@@ -325,6 +347,34 @@ export default async function AdminPage() {
               }</tbody></table>
           </div>
         </div>
+
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Active Order Messages</h2>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-96 overflow-y-auto">
+              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                {activeOrders.length > 0 ? (
+                  activeOrders.map((order) => (
+                    <li key={order.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{order.category}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Client: {order.author?.name || order.author?.username || 'N/A'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4 mt-3 sm:mt-0 flex-shrink-0">
+                        <OrderStatusBadge status={order.status} />
+                        <AdminOrderMessageButton orderId={order.id} unreadCount={order._count.messages} />
+                      </div>
+                    </li>
+                  ))
+                ) : (
+                  <li className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+                    No active orders or messages.
+                  </li>
+                )}
+              </ul>
+            </div>
+         </div>
 
         {/* --- 6. START: New Order Management Table --- */}
          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">

@@ -63,7 +63,6 @@ export default function Login() {
       if (result?.error) {
         // More specific error messages could be handled here if needed
         setError('Invalid credentials. Please try again.');
-        console.error('Login Error:', result.error);
       } else if (result?.ok) {
         // On successful login, redirect to the dashboard
         router.push('/dashboard');
@@ -73,7 +72,6 @@ export default function Login() {
       }
     } catch (error) {
       setError('An unexpected error occurred. Please try again.');
-      console.error('Login failed:', error);
     } finally {
       setIsLoading(false);
     }

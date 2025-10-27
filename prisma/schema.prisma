@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --- ENUMS ---
+// --- Enums ---
 
 enum Role {
   USER
@@ -28,7 +28,7 @@ enum OrderStatus {
   CANCELLED
 }
 
-// --- AUTHENTICATION MODELS ---
+// --- Models ---
 
 model User {
   id                 String               @id @default(cuid())
@@ -40,15 +40,16 @@ model User {
   image              String?
   role               Role                 @default(USER)
   createdAt          DateTime             @default(now())
-  canComment         Boolean              @default(true) // For comment moderation
+  canComment         Boolean              @default(true)
   
   accounts           Account[]
   sessions           Session[]
   articles           Article[]
   bloggerApplication BloggerApplication?
-  userNotifications  UserNotification[] // Relation to user's notifications
-  comments           Comment[]            // Relation to user's comments
-  orders             Order[]              // Relation to user's orders
+  userNotifications  UserNotification[]
+  comments           Comment[]
+  orders             Order[] // Relation to user's orders
+  messages           Message[] // Relation to user's sent messages
 }
 
 model Account {
@@ -85,9 +86,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-
-// --- BLOG MODELS ---
-
 model Article {
   id            String     @id @default(cuid())
   title         String
@@ -113,25 +111,6 @@ model Category {
   articles Article[]
 }
 
-model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  articleId String
-  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
-
-  @@index([authorId])
-  @@index([articleId])
-}
-
-
-// --- APPLICATION MODELS ---
-
 model ContactMessage {
   id        String   @id @default(cuid())
   name      String
@@ -153,27 +132,6 @@ model BloggerApplication {
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
 }
-
-model Order {
-  id          String      @id @default(cuid())
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  
-  category    String      
-  description String      @db.Text
-  budget      String?     
-  deadline    String?     
-  
-  status      OrderStatus @default(PENDING)
-  
-  authorId    String
-  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  @@index([authorId])
-}
-
-
-// --- NOTIFICATION MODELS ---
 
 model Notification {
   id                String             @id @default(cuid())
@@ -197,4 +155,64 @@ model UserNotification {
 
   @@unique([userId, notificationId])
   @@index([userId]) // Add index for faster lookups
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation to User (Author)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Relation to Article
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([articleId])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  category    String
+  description String      @db.Text
+  budget      String?
+  deadline    String?
+  
+  status      OrderStatus @default(PENDING)
+  
+  // Relation to User (Client)
+  authorId    String
+  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  messages    Message[] // Relation to messages
+  
+  @@index([authorId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  content   String   @db.Text
+
+  // Relation to Order
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Relation to Sender (User)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  // Read status
+  isReadByUser  Boolean @default(false)
+  isReadByAdmin Boolean @default(false)
+
+  @@index([orderId])
+  @@index([senderId])
 }
