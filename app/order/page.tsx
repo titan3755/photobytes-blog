@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createOrder } from './actions';
 import { Briefcase, DollarSign, Calendar, MessageSquare, Facebook } from 'lucide-react';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const workCategories = [
   "Photography (Event)",
@@ -35,6 +36,8 @@ export default function OrderPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const { executeRecaptcha } = useGoogleReCaptcha();
+
   // Redirect if not logged in
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -47,17 +50,30 @@ export default function OrderPage() {
     setError(null);
     setSuccess(null);
 
+    if (!executeRecaptcha) {
+      setError("reCAPTCHA not loaded. Please try refreshing the page.");
+      return;
+    }
+
     if (!category || !description) {
       setError('Please select a category and provide a description.');
       return;
     }
 
     startTransition(async () => {
+      let token: string;
+      try {
+        token = await executeRecaptcha('order');
+      } catch (e) {
+        setError("Failed to get reCAPTCHA token. Please try again.");
+        return;
+      }
       const result = await createOrder({
         category,
         description,
         budget: budget || null,
         deadline: deadline || null,
+        recaptchaToken: token,
       });
 
       if (!result.success) {

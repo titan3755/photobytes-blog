@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, Phone, MapPin } from 'lucide-react'; // Import icons
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 // --- START: Added Icon Definitions ---
 // Copied GoogleIcon from register page
@@ -35,6 +36,7 @@ export default function ContactPage() {
   const [formStatus, setFormStatus] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false); // Added for submit button
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   useEffect(() => {
     if (isAuthenticated && session?.user) {
@@ -48,17 +50,22 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormStatus('Submitting...');
     setError('');
+    if (!executeRecaptcha) {
+      setError("reCAPTCHA not loaded. Please try refreshing.");
+      return;
+    }
+    setFormStatus('Submitting...');
     setIsLoading(true); // Set loading
 
     try {
+      const token = await executeRecaptcha('contact');
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, message }),
+        body: JSON.stringify({ name, email, message, recaptchaToken: token }),
       });
 
       if (!response.ok) {

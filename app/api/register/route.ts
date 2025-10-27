@@ -1,25 +1,29 @@
-import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
+import { Role } from '@prisma/client';
+import { verifyRecaptcha } from '@/lib/recaptcha';
 
-/**
- * Handles the POST request for user registration.
- * @param request
- * @returns
- */
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    // Destructure name (it might be undefined if not sent)
-    const { email, username, password, name } = body;
+    const body = await req.json();
+    const { name, email, username, password, recaptchaToken } = body;
 
-    // Only email, username, and password are strictly required from input
-    if (!email || !username || !password) {
-      return new NextResponse('Missing email, username, or password', {
-        status: 400,
-      });
+    // 2. Verify the reCAPTCHA token first
+    if (!recaptchaToken) {
+      return NextResponse.json({ message: 'reCAPTCHA token is missing.' }, { status: 400 });
+    }
+    const isHuman = await verifyRecaptcha(recaptchaToken);
+    if (!isHuman) {
+      return NextResponse.json({ message: 'reCAPTCHA verification failed. Are you a bot?' }, { status: 403 });
     }
 
+    // 3. Validate required fields
+    if (!email || !username || !password) {
+      return NextResponse.json({ message: 'Email, username, and password are required.' }, { status: 400 });
+    }
+
+    // 4. Check if email or username already exists
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email: email }, { username: username }],
@@ -27,40 +31,28 @@ export async function POST(request: Request) {
     });
 
     if (existingUser) {
-      if (existingUser.email === email) {
-        return new NextResponse('User with this email already exists', {
-          status: 409,
-        });
-      }
-      // If not email, it must be username
-      return new NextResponse('User with this username already exists', {
-        status: 409,
-      });
+      return NextResponse.json({ message: 'Email or username already exists.' }, { status: 409 });
     }
 
+    // 5. Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // --- Start: Logic for Name Fallback ---
-    // Use the provided name if it's not empty, otherwise use the username
-    const finalName = name && name.trim().length > 0 ? name.trim() : username;
-    // --- End: Logic for Name Fallback ---
-
+    // 6. Create the user
     const user = await prisma.user.create({
       data: {
+        name: name || null, // Handle optional name
         email,
         username,
-        name: finalName, // Use the finalName determined above
         password: hashedPassword,
-        // Role defaults to USER via schema
+        role: Role.USER, // Default role
       },
     });
 
-    // Don't send the password back
-    const { password: _, ...userWithoutPassword } = user;
+    // Don't return the user object, just a success message
+    return NextResponse.json({ message: 'User registered successfully.' }, { status: 201 });
 
-    return NextResponse.json(userWithoutPassword, { status: 201 });
   } catch (error) {
-    console.error('REGISTRATION_ERROR', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('Registration error:', error);
+    return NextResponse.json({ message: 'An internal server error occurred.' }, { status: 500 });
   }
 }

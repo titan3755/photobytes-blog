@@ -4,6 +4,7 @@ import { auth, signOut } from '@/auth';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { Role } from '@prisma/client';
+import { verifyRecaptcha } from '@/lib/recaptcha';
 
 // --- Order Creation ---
 interface OrderResult {
@@ -16,6 +17,7 @@ interface OrderData {
   description: string;
   budget: string | null;
   deadline: string | null;
+  recaptchaToken: string;
 }
 
 export async function createOrder(data: OrderData): Promise<OrderResult> {
@@ -24,7 +26,14 @@ export async function createOrder(data: OrderData): Promise<OrderResult> {
     return { success: false, message: 'You must be logged in to place an order.' };
   }
   
-  const { category, description, budget, deadline } = data;
+  const { category, description, budget, deadline, recaptchaToken } = data;
+  if (!recaptchaToken) {
+    return { success: false, message: 'reCAPTCHA token is missing.' };
+  }
+  const isHuman = await verifyRecaptcha(recaptchaToken);
+  if (!isHuman) {
+    return { success: false, message: 'reCAPTCHA verification failed. Are you a bot?' };
+  }
 
   if (!category || !description) {
     return { success: false, message: 'Category and Description are required.' };

@@ -4,6 +4,7 @@ import './globals.css';
 import Header from '../components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import AuthProvider from './providers'; // This should contain ThemeProvider
+import ReCaptchaProvider from '@/components/security/ReCaptchaProvider';
 
 const share_tech = Share_Tech({
   subsets: ['latin'],
@@ -31,12 +32,14 @@ export default function RootLayout({
                    dark:bg-gray-900 dark:text-gray-100 
                    transition-colors duration-200 overflow-x-hidden`}
       >
-        <AuthProvider>
-          <Header />
-          {/* 3. Main inherits theme from body */}
-          <main className="mx-auto flex-grow w-full">{children}</main>
-          <Footer />
-        </AuthProvider>
+        <ReCaptchaProvider>
+          <AuthProvider>
+            <Header />
+            {/* 3. Main inherits theme from body */}
+            <main className="mx-auto flex-grow w-full">{children}</main>
+            <Footer />
+          </AuthProvider>
+        </ReCaptchaProvider>
       </body>
     </html>
   );

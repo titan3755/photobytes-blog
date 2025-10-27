@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 // Copied GoogleIcon from register page
 const GoogleIcon = () => (
@@ -32,6 +33,8 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  const { executeRecaptcha } = useGoogleReCaptcha();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -41,9 +44,15 @@ export default function Register() {
       return;
     }
 
+    if (!executeRecaptcha) {
+      setError("reCAPTCHA not loaded. Please try refreshing the page.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      const token = await executeRecaptcha('register');
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: {
@@ -54,6 +63,7 @@ export default function Register() {
           email,
           username,
           password,
+          recaptchaToken: token,
         }),
       });
 
