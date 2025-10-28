@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
-import type { Metadata, ResolvingMetadata } from 'next';
+import type { Metadata } from 'next';
 import FeaturedImage from '@/components/blog/FeaturedImage';
 import Link from 'next/link';
 import CommentsSection from '@/components/blog/CommentsSection';

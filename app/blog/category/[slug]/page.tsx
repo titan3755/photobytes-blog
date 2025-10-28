@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
-import type { Metadata, ResolvingMetadata } from 'next';
+import type { Metadata } from 'next';
 import ArticleCard from '@/components/home/ArticleCard'; // Re-using your home page card
 import { Article } from '@prisma/client'; // Import Article type
 
