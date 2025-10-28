@@ -1,7 +1,6 @@
 'use client';
 
 import { ContactMessage } from '@prisma/client';
-import Link from 'next/link';
 
 interface ModalProps {
   message: ContactMessage;

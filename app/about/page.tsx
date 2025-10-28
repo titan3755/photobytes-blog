@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image'; // Keep this for the Pexels image
 import Link from 'next/link';
-import { Users, PenTool } from 'lucide-react'; // Import icons
+import { PenTool } from 'lucide-react'; // Import icons
 
 export const metadata: Metadata = {
   title: 'About Us | PhotoBytes Blog',

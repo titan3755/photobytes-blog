@@ -16,7 +16,6 @@ import {
   Cell,
 } from 'recharts';
 import { useTheme } from 'next-themes';
-import type { Role, ApplicationStatus } from '@prisma/client';
 
 // Define the props we'll pass from the server
 type AdminStatsProps = {

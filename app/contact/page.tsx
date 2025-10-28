@@ -2,28 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Mail, Phone, MapPin } from 'lucide-react'; // Import icons
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-
-const GoogleIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24">
-    <path
-      fill="currentColor"
-      d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.19,4.73C15.59,4.73 17.9,7.1 17.9,7.1L20.27,4.73C20.27,4.73 17.64,2 12.19,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.19,22C17.6,22 21.54,18.33 21.54,12.81C21.54,11.73 21.35,11.1 21.35,11.1V11.1Z"
-    />
-  </svg>
-);
-
-// Copied FacebookIcon from register page
-const FacebookIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
-  </svg>
-);
-// --- END: Added Icon Definitions ---
-
 
 export default function ContactPage() {
   const { data: session, status } = useSession();
@@ -114,7 +94,7 @@ export default function ContactPage() {
             <div className="flex gap-4">
               <Phone className="h-6 w-6 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
               <dd>
-                +1 (555) 123-4567
+                +88 01931-178236
               </dd>
             </div>
              {/* Address (Placeholder) */}

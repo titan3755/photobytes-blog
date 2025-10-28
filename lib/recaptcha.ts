@@ -1,7 +1,5 @@
 'use server';
 
-import { NextResponse } from 'next/server';
-
 /**
  * Verifies a Google reCAPTCHA v3 token.
  * @param token The reCAPTCHA token from the client.

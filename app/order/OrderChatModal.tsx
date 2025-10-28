@@ -3,10 +3,9 @@
 import { useState, useEffect, useRef, useTransition } from 'react';
 import { useSession } from 'next-auth/react';
 import { getOrderMessages, postMessage, markMessagesAsRead } from './actions';
-import { Role, type Prisma, type User } from '@prisma/client';
+import { Role, type Prisma } from '@prisma/client';
 import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar';
 import { Send, X, Loader2 } from 'lucide-react';
-import Link from 'next/link';
 
 // Define the type for the messages we'll fetch
 type MessageWithSender = Prisma.MessageGetPayload<{
@@ -83,7 +82,7 @@ export default function OrderChatModal({ orderId, onClose }: OrderChatModalProps
       const fetchedMessages = await getOrderMessages(orderId);
       setMessages(fetchedMessages);
     } catch (err) {
-      setError('Failed to load messages.');
+      setError('Failed to load messages.' + err);
     } finally {
       setIsLoading(false);
     }

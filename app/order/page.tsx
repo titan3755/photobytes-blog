@@ -3,9 +3,8 @@
 import { useState, useEffect, useTransition } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { createOrder } from './actions';
-import { Briefcase, DollarSign, Calendar, MessageSquare, Facebook } from 'lucide-react';
+import { DollarSign, Calendar, Facebook } from 'lucide-react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const workCategories = [
@@ -20,7 +19,7 @@ const workCategories = [
 ];
 
 export default function OrderPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const isAuthenticated = status === 'authenticated';
   const isLoadingSession = status === 'loading';
@@ -65,7 +64,7 @@ export default function OrderPage() {
       try {
         token = await executeRecaptcha('order');
       } catch (e) {
-        setError("Failed to get reCAPTCHA token. Please try again.");
+        setError("Failed to get reCAPTCHA token. Please try again." + e);
         return;
       }
       const result = await createOrder({

@@ -6,9 +6,6 @@ import {
   ApplicationStatus,
   UserNotification,
   Notification,
-  Comment,
-  Order,        // 1. Import Order
-  OrderStatus,
   Prisma, // 1. Import Prisma
 } from '@prisma/client';
 import Link from 'next/link';

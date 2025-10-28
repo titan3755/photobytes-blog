@@ -1,6 +1,6 @@
 'use server';
 
-import { auth, signOut } from '@/auth';
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { Role, Prisma } from '@prisma/client'; // 1. Import Prisma
 import { revalidatePath } from 'next/cache';

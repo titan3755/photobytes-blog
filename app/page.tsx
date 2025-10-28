@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import prisma from '@/lib/prisma';
-import Link from 'next/link';
-import { Article, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import ArticleCard from '@/components/home/ArticleCard';
 import SearchBar from '@/components/home/SearchBar';
 import PaginationControls from '@/components/home/PaginationControls'; // 1. Import Pagination

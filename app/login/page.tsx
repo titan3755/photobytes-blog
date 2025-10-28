@@ -70,8 +70,8 @@ export default function Login() {
       } else {
         setError('Login failed. Please try again.');
       }
-    } catch (error) {
-      setError('An unexpected error occurred. Please try again.');
+    } catch (e) {
+      setError('An unexpected error occurred. Please try again.' + e);
     } finally {
       setIsLoading(false);
     }

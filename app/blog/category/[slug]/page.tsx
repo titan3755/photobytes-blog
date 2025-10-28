@@ -12,7 +12,7 @@ type Props = {
 // --- 1. Generate Dynamic Metadata for SEO ---
 export async function generateMetadata(
   { params }: Props,
-  parent: ResolvingMetadata
+  // parent: ResolvingMetadata
 ): Promise<Metadata> {
   const slug = params.slug;
 

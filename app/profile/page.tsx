@@ -39,11 +39,11 @@ export default async function ProfilePage() {
   let profileData: ProfileData;
   try {
     profileData = await getProfileData();
-  } catch (error) {
+  } catch (error: string | any) {
     return (
       <div className="min-h-screen w-full p-8 flex items-center justify-center">
         <p className="text-red-500 dark:text-red-400">
-          Failed to load profile data.
+          Failed to load profile data. {error.message}
         </p>
       </div>
     );

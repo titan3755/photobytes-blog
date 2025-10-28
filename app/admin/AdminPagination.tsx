@@ -17,7 +17,6 @@ export default function AdminPagination({
   currentPage,
   totalPages,
 }: PaginationControlsProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   // This function creates the new URL while preserving existing search params

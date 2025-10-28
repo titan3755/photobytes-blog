@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -13,7 +13,6 @@ export default function PaginationControls({
   currentPage,
   totalPages,
 }: PaginationControlsProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   // This function creates the new URL while preserving existing search queries

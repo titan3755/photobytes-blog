@@ -1,15 +1,6 @@
 import prisma from '@/lib/prisma';
 import {
-  Article,
-  User,
-  ContactMessage,
-  Role,
-  BloggerApplication,
   ApplicationStatus,
-  Category,
-  Notification,
-  Comment,
-  Order,
   OrderStatus,
 } from '@prisma/client';
 import UserRowActions from './UserRowActions';

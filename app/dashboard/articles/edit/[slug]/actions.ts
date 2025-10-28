@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
-import { Role, Article } from '@prisma/client';
+import { Role } from '@prisma/client';
 
 interface UpdateArticleResult {
   success: boolean;
