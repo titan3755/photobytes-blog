@@ -24,15 +24,20 @@ import CommentRowActions from './CommentRowActions';
 import OrderRowActions from './OrderRowActions';
 import AdminStats from './AdminStats';
 import AdminOrderMessageButton from './AdminOrderMessageButton';
-import AdminTabs from './AdminTabs'; // 1. Import the new Tabs
+import AdminTabs from './AdminTabs';
+import AdminPagination from './AdminPagination';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { ApplicationWithUser } from './BloggerApplicationModal';
 import { unstable_noStore as noStore } from 'next/cache';
 
+// --- START FIX: Force dynamic rendering for the route ---
+// This ensures searchParams is available on the server.
+export const dynamic = 'force-dynamic';
+// --- END FIX ---
+
 // --- All Helper Components (StatCard, StatusBadge, etc.) ---
-// ... (They remain here, unchanged) ...
 function StatCard({ title, value }: { title: string; value: number | string }) {
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
@@ -110,13 +115,14 @@ function OrderStatusBadge({ status }: { status: OrderStatus }) {
   );
 }
 
+
 // --- Main Page Component ---
 export default async function AdminPage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) {
-  noStore();
+  noStore(); // Keep this for data fetching
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') {
     redirect('/forbidden');
@@ -124,26 +130,19 @@ export default async function AdminPage({
 
   // 2. Determine the current tab
   const currentTab = searchParams.tab || 'home';
-
-  // 3. Conditionally fetch data based on the *active tab*
-  // This is the core performance improvement.
+  const currentPage = Number(searchParams.page) || 1;
+  const pageSize = 10; // 10 items per page
+  const skip = (currentPage - 1) * pageSize;
   
-  let data: any = {}; // To hold all our data
+  let data: any = { pagination: { currentPage: 1, totalPages: 1 } }; // Init data object
+
   
   if (currentTab === 'home') {
     // --- Fetch data ONLY for the Home tab ---
     const [
-      totalUsers,
-      totalArticles,
-      publishedArticlesCount,
-      totalComments,
-      totalOrders,
-      pendingOrders,
-      unreadMessagesCount,
-      pendingApplicationsCount,
-      allUsers,
-      bloggerApplications,
-      allCategories
+      totalUsers, totalArticles, publishedArticlesCount, totalComments,
+      totalOrders, pendingOrders, unreadMessagesCount, pendingApplicationsCount,
+      allUsers, bloggerApplications, allCategories
     ] = await prisma.$transaction([
       prisma.user.count(),
       prisma.article.count(),
@@ -158,7 +157,7 @@ export default async function AdminPage({
       prisma.category.count(),
     ]);
 
-    // Process data for charts
+    // ... (Chart data processing remains the same) ...
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const signupsByDay = allUsers
@@ -176,8 +175,8 @@ export default async function AdminPage({
       last7DaysMap.set(dayKey, signupsByDay[dayKey] || 0);
     }
     
-    // Pass all data to the 'data' object
     data = {
+      ...data,
       stats: {
         totalUsers, totalArticles, publishedArticlesCount, totalComments,
         totalOrders, pendingOrders, unreadMessagesCount, pendingApplicationsCount
@@ -198,16 +197,35 @@ export default async function AdminPage({
     };
     
   } else if (currentTab === 'users') {
-    data.allUsers = await prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true, username: true, email: true, createdAt: true, role: true, canComment: true },
-    });
+    // 3. Paginate this query
+    const [allUsers, totalCount] = await prisma.$transaction([
+      prisma.user.findMany({
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, name: true, username: true, email: true, createdAt: true, role: true, canComment: true },
+        take: pageSize,
+        skip: skip,
+      }),
+      prisma.user.count()
+    ]);
+    data.allUsers = allUsers;
+    data.pagination = { currentPage, totalPages: Math.ceil(totalCount / pageSize) };
+    
   } else if (currentTab === 'articles') {
-     data.allArticles = await prisma.article.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { author: { select: { name: true, username: true, email: true } } },
-    });
+    // 3. Paginate this query
+    const [allArticles, totalCount] = await prisma.$transaction([
+      prisma.article.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: { author: { select: { name: true, username: true, email: true } } },
+        take: pageSize,
+        skip: skip,
+      }),
+      prisma.article.count()
+    ]);
+    data.allArticles = allArticles;
+    data.pagination = { currentPage, totalPages: Math.ceil(totalCount / pageSize) };
+
   } else if (currentTab === 'orders') {
+    // Note: Active Orders remains unpaginated (it's a small, focused list)
     data.activeOrders = await prisma.order.findMany({
       where: { OR: [
         { status: 'PENDING' },
@@ -221,38 +239,85 @@ export default async function AdminPage({
       orderBy: { updatedAt: 'desc' },
       take: 10,
     });
-    data.allOrders = await prisma.order.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { author: { select: { name: true, username: true, email: true } } }
-    });
+    
+    // 3. Paginate the "All Orders" query
+    const [allOrders, totalCount] = await prisma.$transaction([
+        prisma.order.findMany({
+          orderBy: { createdAt: 'desc' },
+          include: { author: { select: { name: true, username: true, email: true } } },
+          take: pageSize,
+          skip: skip,
+        }),
+        prisma.order.count()
+    ]);
+    data.allOrders = allOrders;
+    data.pagination = { currentPage, totalPages: Math.ceil(totalCount / pageSize) };
+
   } else if (currentTab === 'messages') {
-    data.contactMessages = await prisma.contactMessage.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    // 3. Paginate this query
+    const [contactMessages, totalCount] = await prisma.$transaction([
+      prisma.contactMessage.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: pageSize,
+        skip: skip,
+      }),
+      prisma.contactMessage.count()
+    ]);
+    data.contactMessages = contactMessages;
+    data.pagination = { currentPage, totalPages: Math.ceil(totalCount / pageSize) };
+
   } else if (currentTab === 'comments') {
-    data.allComments = await prisma.comment.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        author: { select: { name: true, username: true, email: true } },
-        article: { select: { title: true, slug: true } },
-      },
-      take: 50,
-    });
+    // 3. Paginate this query
+    const [allComments, totalCount] = await prisma.$transaction([
+        prisma.comment.findMany({
+          orderBy: { createdAt: 'desc' },
+          include: {
+            author: { select: { name: true, username: true, email: true } },
+            article: { select: { title: true, slug: true } },
+          },
+          take: pageSize,
+          skip: skip,
+        }),
+        prisma.comment.count()
+    ]);
+    data.allComments = allComments;
+    data.pagination = { currentPage, totalPages: Math.ceil(totalCount / pageSize) };
+
   } else if (currentTab === 'applications') {
-     data.bloggerApplications = await prisma.bloggerApplication.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { user: { select: { name: true, email: true, username: true } } },
-    });
+    // 3. Paginate this query
+    const [bloggerApplications, totalCount] = await prisma.$transaction([
+        prisma.bloggerApplication.findMany({
+          orderBy: { createdAt: 'desc' },
+          include: { user: { select: { name: true, email: true, username: true } } },
+          take: pageSize,
+          skip: skip,
+        }),
+        prisma.bloggerApplication.count()
+    ]);
+    data.bloggerApplications = bloggerApplications;
+    data.pagination = { currentPage, totalPages: Math.ceil(totalCount / pageSize) };
+
   } else if (currentTab === 'notifications') {
+    // This form needs all users for the dropdown, so we don't paginate it
     data.allUsers = await prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       select: { id: true, name: true, username: true, email: true, createdAt: true, role: true, canComment: true },
     });
-    data.allNotifications = await prisma.notification.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { userNotifications: true } } }
-    });
+    // 3. Paginate the notifications list
+    const [allNotifications, totalCount] = await prisma.$transaction([
+        prisma.notification.findMany({
+          orderBy: { createdAt: 'desc' },
+          include: { _count: { select: { userNotifications: true } } },
+          take: pageSize,
+          skip: skip,
+        }),
+        prisma.notification.count()
+    ]);
+    data.allNotifications = allNotifications;
+    data.pagination = { currentPage, totalPages: Math.ceil(totalCount / pageSize) };
+
   } else if (currentTab === 'categories') {
+    // Categories list is small, pagination is not necessary
     data.allCategories = await prisma.category.findMany({
       orderBy: { name: 'asc' },
     });
@@ -266,7 +331,6 @@ export default async function AdminPage({
           Admin Control Panel
         </h1>
         
-        {/* Render the Client-side Tab Navigation */}
         <AdminTabs />
 
         {/* --- 5. Conditionally Render the Active Tab's Content --- */}
@@ -322,6 +386,7 @@ export default async function AdminPage({
                     )}
                   </tbody></table>
                 </div>
+                <AdminPagination currentPage={data.pagination.currentPage} totalPages={data.pagination.totalPages} />
             </div>
           )}
 
@@ -347,72 +412,17 @@ export default async function AdminPage({
                     )
                   }</tbody></table>
                </div>
+               <AdminPagination currentPage={data.pagination.currentPage} totalPages={data.pagination.totalPages} />
             </div>
           )}
 
           {/* --- ORDERS TAB --- */}
           {currentTab === 'orders' && (
             <>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"> <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Active Order Messages</h2> <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-96 overflow-y-auto"> <ul className="divide-y divide-gray-200 dark:divide-gray-700"> {data.activeOrders.length > 0 ? ( data.activeOrders.map((order: any) => ( <li key={order.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700"> <div className="min-w-0"> <p className="text-sm font-medium text-gray-900 dark:text-white">{order.category}</p> <p className="text-xs text-gray-500 dark:text-gray-400"> Client: {order.author?.name || order.author?.username || 'N/A'} </p> </div> <div className="flex items-center gap-4 mt-3 sm:mt-0 flex-shrink-0"> <OrderStatusBadge status={order.status} /> <AdminOrderMessageButton orderId={order.id} unreadCount={order._count.messages} /> </div> </li> )) ) : ( <li className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center"> No active orders or messages. </li> )} </ul> </div> </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Active Order Messages</h2>
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-96 overflow-y-auto">
-                  <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {data.activeOrders.length > 0 ? (
-                      data.activeOrders.map((order: any) => (
-                        <li key={order.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{order.category}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              Client: {order.author?.name || order.author?.username || 'N/A'}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-4 mt-3 sm:mt-0 flex-shrink-0">
-                            <OrderStatusBadge status={order.status} />
-                            <AdminOrderMessageButton orderId={order.id} unreadCount={order._count.messages} />
-                          </div>
-                        </li>
-                      ))
-                    ) : (
-                      <li className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-                        No active orders or messages.
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">All Orders</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Budget</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                    </tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{
-                    data.allOrders.length > 0 ? (
-                      data.allOrders.map((order: any) => (
-                        <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">{order.author?.name || order.author?.username}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">{order.author?.email}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{order.category}</td>
-                          <td className="px-6 py-4 max-w-sm"><p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={order.description}>{order.description}</p></td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{order.budget || 'N/A'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap"><OrderStatusBadge status={order.status} /></td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><OrderRowActions order={order} /></td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr><td colSpan={7} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No orders found.</td></tr>
-                    )
-                  }</tbody></table>
-                </div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">All Orders</h2> <div className="overflow-x-auto"> <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Budget</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th><th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{ data.allOrders.length > 0 ? ( data.allOrders.map((order: any) => ( <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700"> <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</td> <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm font-medium text-gray-900 dark:text-white">{order.author?.name || order.author?.username}</div> <div className="text-xs text-gray-500 dark:text-gray-400">{order.author?.email}</div> </td> <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{order.category}</td> <td className="px-6 py-4 max-w-sm"><p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={order.description}>{order.description}</p></td> <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{order.budget || 'N/A'}</td> <td className="px-6 py-4 whitespace-nowrap"><OrderStatusBadge status={order.status} /></td> <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><OrderRowActions order={order} /></td> </tr> )) ) : ( <tr><td colSpan={7} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No orders found.</td></tr> ) }</tbody></table> </div>
+                <AdminPagination currentPage={data.pagination.currentPage} totalPages={data.pagination.totalPages} />
               </div>
             </>
           )}
@@ -420,84 +430,24 @@ export default async function AdminPage({
           {/* --- MESSAGES TAB --- */}
           {currentTab === 'messages' && (
              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Contact Messages </h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Received</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Message</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th><th scope="col" className="relative px-6 py-3 text-right">Actions</th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{
-                    data.contactMessages.length > 0 ? (
-                      data.contactMessages.map((message: any) => (
-                        <tr key={message.id} className={`${message.isRead ? 'opacity-70 dark:opacity-60' : 'font-semibold'} hover:bg-gray-50 dark:hover:bg-gray-700`}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(message.createdAt).toLocaleString()}</td>
-                          <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900 dark:text-white">{message.name}</div></td>
-                          <td className="px-6 py-4 whitespace-nowrap"><a href={`mailto:${message.email}`} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">{message.email}</a></td>
-                          <td className="px-6 py-4 max-w-sm"><p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={message.message}> {message.message} </p></td>
-                          <td className="px-6 py-4 whitespace-nowrap"> <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${message.isRead ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 animate-pulse'}`}> {message.isRead ? 'Read' : 'Unread'} </span> </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"> <ContactMessageRowActions message={message} /> </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No contact messages received yet.</td></tr>
-                    )
-                  }</tbody></table>
-                </div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Contact Messages </h2> <div className="overflow-x-auto"> <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Received</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Message</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th><th scope="col" className="relative px-6 py-3 text-right">Actions</th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{ data.contactMessages.length > 0 ? ( data.contactMessages.map((message: any) => ( <tr key={message.id} className={`${message.isRead ? 'opacity-70 dark:opacity-60' : 'font-semibold'} hover:bg-gray-50 dark:hover:bg-gray-700`}> <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(message.createdAt).toLocaleString()}</td> <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900 dark:text-white">{message.name}</div></td> <td className="px-6 py-4 whitespace-nowrap"><a href={`mailto:${message.email}`} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">{message.email}</a></td> <td className="px-6 py-4 max-w-sm"><p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={message.message}> {message.message} </p></td> <td className="px-6 py-4 whitespace-nowrap"> <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${message.isRead ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 animate-pulse'}`}> {message.isRead ? 'Read' : 'Unread'} </span> </td> <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"> <ContactMessageRowActions message={message} /> </td> </tr> )) ) : ( <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No contact messages received yet.</td></tr> ) }</tbody></table> </div>
+                <AdminPagination currentPage={data.pagination.currentPage} totalPages={data.pagination.totalPages} />
             </div>
           )}
 
           {/* --- COMMENTS TAB --- */}
           {currentTab === 'comments' && (
              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Recent Comments </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Comment</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">On Article</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                    <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
-                  </tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{
-                  data.allComments.length > 0 ? (
-                    data.allComments.map((comment: any) => (
-                      <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="px-6 py-4 max-w-sm"><p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={comment.content}>{comment.content}</p></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{comment.author?.name || comment.author?.username || 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap"><Link href={`/blog/${comment.article.slug}`} className="text-sm text-blue-600 dark:text-blue-400 hover:underline truncate max-w-xs" title={comment.article.title}> {comment.article.title} </Link></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(comment.createdAt).toLocaleString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><CommentRowActions commentId={comment.id} commentContent={comment.content} /></td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr><td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No comments found.</td></tr>
-                  )
-                }</tbody></table>
-              </div>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Recent Comments </h2> <div className="overflow-x-auto"> <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Comment</th> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">On Article</th> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th> <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th> </tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{ data.allComments.length > 0 ? ( data.allComments.map((comment: any) => ( <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700"> <td className="px-6 py-4 max-w-sm"><p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={comment.content}>{comment.content}</p></td> <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{comment.author?.name || comment.author?.username || 'N/A'}</td> <td className="px-6 py-4 whitespace-nowrap"><Link href={`/blog/${comment.article.slug}`} className="text-sm text-blue-600 dark:text-blue-400 hover:underline truncate max-w-xs" title={comment.article.title}> {comment.article.title} </Link></td> <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(comment.createdAt).toLocaleString()}</td> <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><CommentRowActions commentId={comment.id} commentContent={comment.content} /></td> </tr> )) ) : ( <tr><td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No comments found.</td></tr> ) }</tbody></table> </div>
+              <AdminPagination currentPage={data.pagination.currentPage} totalPages={data.pagination.totalPages} />
             </div>
           )}
 
           {/* --- APPLICATIONS TAB --- */}
           {currentTab === 'applications' && (
              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Blogger Applications </h2>
-                <div className="overflow-x-auto">
-                 <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Applicant </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Reason </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Topics </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Sample </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Status </th><th scope="col" className="relative px-6 py-3 text-right"> Actions </th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{
-                    data.bloggerApplications.length > 0 ? (
-                      data.bloggerApplications.map((app: any) => (
-                        <tr key={app.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">{app.user?.name || app.user?.username || 'N/A'}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">{app.user?.email || 'N/A'}</div>
-                            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Applied: {new Date(app.createdAt).toLocaleDateString()}</div>
-                          </td>
-                          <td className="px-6 py-4 max-w-xs"> <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={app.reason}> {app.reason} </p> </td>
-                          <td className="px-6 py-4 max-w-xs"> <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={app.topics}> {app.topics} </p> </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm"> {app.sampleUrl ? ( <a href={app.sampleUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">View</a> ) : ( <span className="text-gray-400 dark:text-gray-500">None</span> )} </td>
-                          <td className="px-6 py-4 whitespace-nowrap"> <StatusBadge status={app.status} /> </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"> <BloggerApplicationRowActions application={app as ApplicationWithUser} /> </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr> <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"> No blogger applications received yet. </td> </tr>
-                    )
-                  }</tbody></table>
-                </div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Blogger Applications </h2> <div className="overflow-x-auto"> <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Applicant </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Reason </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Topics </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Sample </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Status </th><th scope="col" className="relative px-6 py-3 text-right"> Actions </th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">{ data.bloggerApplications.length > 0 ? ( data.bloggerApplications.map((app: any) => ( <tr key={app.id} className="hover:bg-gray-50 dark:hover:bg-gray-700"> <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm font-medium text-gray-900 dark:text-white">{app.user?.name || app.user?.username || 'N/A'}</div> <div className="text-xs text-gray-500 dark:text-gray-400">{app.user?.email || 'N/A'}</div> <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Applied: {new Date(app.createdAt).toLocaleDateString()}</div> </td> <td className="px-6 py-4 max-w-xs"> <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={app.reason}> {app.reason} </p> </td> <td className="px-6 py-4 max-w-xs"> <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={app.topics}> {app.topics} </p> </td> <td className="px-6 py-4 whitespace-nowrap text-sm"> {app.sampleUrl ? ( <a href={app.sampleUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">View</a> ) : ( <span className="text-gray-400 dark:text-gray-500">None</span> )} </td> <td className="px-6 py-4 whitespace-nowrap"> <StatusBadge status={app.status} /> </td> <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"> <BloggerApplicationRowActions application={app as ApplicationWithUser} /> </td> </tr> )) ) : ( <tr> <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"> No blogger applications received yet. </td> </tr> ) }</tbody></table> </div>
+                <AdminPagination currentPage={data.pagination.currentPage} totalPages={data.pagination.totalPages} />
             </div>
           )}
 
@@ -546,6 +496,7 @@ export default async function AdminPage({
                     )
                   }</tbody></table>
               </div>
+              <AdminPagination currentPage={data.pagination.currentPage} totalPages={data.pagination.totalPages} />
             </div>
             </>
           )}
@@ -588,3 +539,4 @@ export default async function AdminPage({
     </div>
   );
 }
+
