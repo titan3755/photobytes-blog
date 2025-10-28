@@ -147,7 +147,7 @@ export default function PrivacyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Children's Privacy</h2>
+        <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Children&apos;s Privacy</h2>
         <p className="text-lg">
           We do not knowingly collect any personally identifiable
           information from children under the age of 13. If you believe your
@@ -188,9 +188,9 @@ export default function PrivacyPage() {
       <section className="mb-12 text-lg">
         <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">1. Agreement to Terms</h2>
         <p>
-          By accessing or using our website (the "Service"), operated by
-          PhotoBytes Studios ("us," "we," or "our"), you agree to be bound
-          by these Terms of Service ("Terms"). If you disagree with any
+          By accessing or using our website (the &quot;Service&quot;), operated by
+          PhotoBytes Studios (&quot;us,&quot; &quot;we,&quot; or &quot;our&quot;), you agree to be bound
+          by these Terms of Service (&quot;Terms&quot;). If you disagree with any
           part of the terms, you may not access the Service.
         </p>
       </section>
@@ -216,7 +216,7 @@ export default function PrivacyPage() {
         <p className="text-lg">
           Our Service may allow you to post, link, store, share, and
           otherwise make available certain information, text, graphics,
-          videos, or other material ("Content"). You are responsible for
+          videos, or other material (&quot;Content&quot;). You are responsible for
           the Content that you post on or through the Service, including
           its legality, reliability, and appropriateness.
         </p>
@@ -266,7 +266,7 @@ export default function PrivacyPage() {
         <p className="text-lg">
           We may terminate or suspend your account immediately, without
           prior notice or liability, for any reason whatsoever, including
-          _without limitation_ if you breach the Terms.
+          without limitation if you breach the Terms.
         </p>
       </section>
 
@@ -276,7 +276,7 @@ export default function PrivacyPage() {
         </h2>
         <p className="text-lg">
           Your use of the Service is at your sole risk. The Service is
-          provided on an "AS IS" and "AS AVAILABLE" basis. We expressly
+          provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis. We expressly
           disclaim all warranties of any kind, whether express or implied.
         </p>
       </section>
@@ -309,7 +309,7 @@ export default function PrivacyPage() {
         <p className="text-lg">
           We reserve the right, at our sole discretion, to modify or
           replace these Terms at any time. We will provide at least 30
-          days' notice prior to any new terms taking effect.
+          days&apos; notice prior to any new terms taking effect.
         </p>
       </section>
 
