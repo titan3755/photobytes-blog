@@ -11,7 +11,6 @@ import {
   Comment,
   Order,
   OrderStatus,
-  Prisma, // 1. Import Prisma
 } from '@prisma/client';
 import UserRowActions from './UserRowActions';
 import ContactMessageRowActions from './ContactMessageRowActions';
@@ -114,7 +113,7 @@ function OrderStatusBadge({ status }: { status: OrderStatus }) {
   );
 }
 
-// --- START FIX: Define types to replace 'any' ---
+// --- 2. Define Types for our paginated data ---
 type AdminUser = Pick<User, 'id' | 'name' | 'username' | 'email' | 'createdAt' | 'role' | 'canComment'>;
 type AdminArticle = Article & { author: Pick<User, 'name' | 'username' | 'email'> | null };
 type AdminOrder = Order & { author: Pick<User, 'name' | 'username' | 'email'> | null };
@@ -129,56 +128,26 @@ type ActiveOrder = (Order & {
     _count: { messages: number; };
 })
 
-interface AdminData {
-  pagination: { currentPage: number, totalPages: number };
-  stats?: {
-    totalUsers: number;
-    totalArticles: number;
-    publishedArticlesCount: number;
-    totalComments: number;
-    totalOrders: number;
-    pendingOrders: number;
-    unreadMessagesCount: number;
-    pendingApplicationsCount: number;
-  };
-  charts?: {
-    dailySignups: { name: string, users: number }[];
-    contentBreakdown: { name: string, count: number }[];
-    applicationData: { name: string, count: number }[];
-  };
-  allUsers?: AdminUser[];
-  allArticles?: AdminArticle[];
-  activeOrders?: ActiveOrder[];
-  allOrders?: AdminOrder[];
-  contactMessages?: ContactMessage[];
-  allComments?: AdminComment[];
-  bloggerApplications?: AdminBloggerApp[];
-  allNotifications?: AdminNotification[];
-  allCategories?: Category[];
-}
-// --- END FIX ---
-
-
 // --- Main Page Component ---
 export default async function AdminPage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) {
+  // noStore(); // Removed this
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') {
     redirect('/forbidden');
   }
 
   // 2. Determine the current tab
-  const currentTab = searchParams.tab || 'home';
-  const currentPage = Number(searchParams.page) || 1;
+  const sp = await searchParams;
+  const currentTab = sp.tab || 'home';
+  const currentPage = Number(sp.page) || 1;
   const pageSize = 10; // 10 items per page
   const skip = (currentPage - 1) * pageSize;
   
-  // --- START FIX: Apply the AdminData type ---
-  let data: AdminData = { pagination: { currentPage: 1, totalPages: 1 } }; // Init data object
-  // --- END FIX ---
+  let data: any = { pagination: { currentPage: 1, totalPages: 1 } }; // Init data object
   
   if (currentTab === 'home') {
     // --- Fetch data ONLY for the Home tab ---
@@ -221,7 +190,7 @@ export default async function AdminPage({
     
     // Pass all data to the 'data' object
     data = {
-      ...data, // Keep pagination base
+      ...data,
       stats: {
         totalUsers, totalArticles, publishedArticlesCount, totalComments,
         totalOrders, pendingOrders, unreadMessagesCount, pendingApplicationsCount
@@ -361,7 +330,7 @@ export default async function AdminPage({
   // --- START: Hydration Fix (Pre-render rows) ---
   let userRows, articleRows, orderRows, messageRows, commentRows, applicationRows, notificationRows;
 
-  if (currentTab === 'users' && data.allUsers) {
+  if (currentTab === 'users') {
     userRows = data.allUsers.length > 0 ? (
       data.allUsers.map((user: AdminUser) => ( // --- FIX: Use AdminUser type ---
         <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -378,7 +347,7 @@ export default async function AdminPage({
     );
   }
 
-  if (currentTab === 'articles' && data.allArticles) {
+  if (currentTab === 'articles') {
     articleRows = data.allArticles.length > 0 ? (
       data.allArticles.map((article: AdminArticle) => ( // --- FIX: Use AdminArticle type ---
         <tr key={article.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -395,7 +364,7 @@ export default async function AdminPage({
     );
   }
 
-  if (currentTab === 'orders' && data.allOrders) {
+  if (currentTab === 'orders') {
     orderRows = data.allOrders.length > 0 ? (
       data.allOrders.map((order: AdminOrder) => ( // --- FIX: Use AdminOrder type ---
         <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -413,7 +382,7 @@ export default async function AdminPage({
     );
   }
 
-  if (currentTab === 'messages' && data.contactMessages) {
+  if (currentTab === 'messages') {
     messageRows = data.contactMessages.length > 0 ? (
       data.contactMessages.map((message: ContactMessage) => ( // --- FIX: Use ContactMessage type ---
         <tr key={message.id} className={`${message.isRead ? 'opacity-70 dark:opacity-60' : 'font-semibold'} hover:bg-gray-50 dark:hover:bg-gray-700`}>
@@ -430,7 +399,7 @@ export default async function AdminPage({
     );
   }
 
-  if (currentTab === 'comments' && data.allComments) {
+  if (currentTab === 'comments') {
     commentRows = data.allComments.length > 0 ? (
       data.allComments.map((comment: AdminComment) => ( // --- FIX: Use AdminComment type ---
         <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -446,7 +415,7 @@ export default async function AdminPage({
     );
   }
   
-  if (currentTab === 'applications' && data.bloggerApplications) {
+  if (currentTab === 'applications') {
     applicationRows = data.bloggerApplications.length > 0 ? (
       data.bloggerApplications.map((app: AdminBloggerApp) => ( // --- FIX: Use AdminBloggerApp type ---
         <tr key={app.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -463,7 +432,7 @@ export default async function AdminPage({
     );
   }
 
-  if (currentTab === 'notifications' && data.allNotifications) {
+  if (currentTab === 'notifications') {
     notificationRows = data.allNotifications.length > 0 ? (
       data.allNotifications.map((notif: AdminNotification) => ( // --- FIX: Use AdminNotification type ---
         <tr key={notif.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -511,7 +480,7 @@ export default async function AdminPage({
         <div className="space-y-12">
 
           {/* --- HOME TAB --- */}
-          {(currentTab === 'home' || !currentTab) && data.stats && data.charts && (
+          {(currentTab === 'home' || !currentTab) && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard title="Total Users" value={data.stats.totalUsers} />
@@ -532,7 +501,7 @@ export default async function AdminPage({
           )}
           
           {/* --- USERS TAB --- */}
-          {currentTab === 'users' && data.allUsers && (
+          {currentTab === 'users' && (
              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> User Management </h2>
                 <div className="overflow-x-auto">
@@ -552,7 +521,7 @@ export default async function AdminPage({
           )}
 
           {/* --- ARTICLES TAB --- */}
-          {currentTab === 'articles' && data.allArticles && (
+          {currentTab === 'articles' && (
              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Manage All Articles </h2>
                <div className="overflow-x-auto">
@@ -565,7 +534,7 @@ export default async function AdminPage({
           )}
 
           {/* --- ORDERS TAB --- */}
-          {currentTab === 'orders' && data.activeOrders && data.allOrders && (
+          {currentTab === 'orders' && (
             <>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"> <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Active Order Messages</h2> <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-96 overflow-y-auto"> <ul className="divide-y divide-gray-200 dark:divide-gray-700"> {data.activeOrders.length > 0 ? ( data.activeOrders.map((order: ActiveOrder) => ( <li key={order.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700"> <div className="min-w-0"> <p className="text-sm font-medium text-gray-900 dark:text-white">{order.category}</p> <p className="text-xs text-gray-500 dark:text-gray-400"> Client: {order.author?.name || order.author?.username || 'N/A'} </p> </div> <div className="flex items-center gap-4 mt-3 sm:mt-0 flex-shrink-0"> <OrderStatusBadge status={order.status} /> <AdminOrderMessageButton orderId={order.id} unreadCount={order._count.messages} /> </div> </li> )) ) : ( <li className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center"> No active orders or messages. </li> )} </ul> </div> </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
@@ -578,7 +547,7 @@ export default async function AdminPage({
           )}
           
           {/* --- MESSAGES TAB --- */}
-          {currentTab === 'messages' && data.contactMessages && (
+          {currentTab === 'messages' && (
              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Contact Messages </h2> <div className="overflow-x-auto"> <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Received</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Message</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th><th scope="col" className="relative px-6 py-3 text-right">Actions</th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {messageRows}
@@ -588,9 +557,9 @@ export default async function AdminPage({
           )}
 
           {/* --- COMMENTS TAB --- */}
-          {currentTab === 'comments' && data.allComments && (
+          {currentTab === 'comments' && (
              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Recent Comments </h2> <div className="overflow-x-auto"> <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Comment</th> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">On Article</th> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th> <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th> </tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Manage Comments </h1> <div className="overflow-x-auto"> <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Comment</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Article</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Posted</th><th scope="col" className="relative px-6 py-3 text-right">Actions</th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {commentRows}
                 </tbody></table> </div>
               <AdminPagination currentPage={data.pagination.currentPage} totalPages={data.pagination.totalPages} />
@@ -598,7 +567,7 @@ export default async function AdminPage({
           )}
 
           {/* --- APPLICATIONS TAB --- */}
-          {currentTab === 'applications' && data.bloggerApplications && (
+          {currentTab === 'applications' && (
              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Blogger Applications </h2> <div className="overflow-x-auto"> <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Applicant </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Reason </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Topics </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Sample </th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"> Status </th><th scope="col" className="relative px-6 py-3 text-right"> Actions </th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {applicationRows}
@@ -608,11 +577,11 @@ export default async function AdminPage({
           )}
 
           {/* --- NOTIFICATIONS TAB --- */}
-          {currentTab === 'notifications' && data.allNotifications && (
+          {currentTab === 'notifications' && (
             <>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
                   <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Send Notification </h2>
-                  <SendNotificationForm allUsers={data.allUsers || []} />
+                  <SendNotificationForm allUsers={data.allUsers} />
               </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
               <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
@@ -629,7 +598,7 @@ export default async function AdminPage({
           )}
 
           {/* --- CATEGORIES TAB --- */}
-          {currentTab === 'categories' && data.allCategories && (
+          {currentTab === 'categories' && (
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Category Management </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -666,4 +635,3 @@ export default async function AdminPage({
     </div>
   );
 }
-
