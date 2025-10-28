@@ -21,9 +21,11 @@ export default async function Home({
     page?: string; // 2. Accept 'page'
   };
 }) {
+
+  const sp = await searchParams;
   
-  const searchQuery = searchParams?.search || '';
-  const currentPage = Number(searchParams?.page) || 1; // 3. Get current page, default to 1
+  const searchQuery = sp?.search || '';
+  const currentPage = Number(sp?.page) || 1; // 3. Get current page, default to 1
   const pageSize = 6; // 4. Define how many articles per page
   const skip = (currentPage - 1) * pageSize; // 5. Calculate offset
 

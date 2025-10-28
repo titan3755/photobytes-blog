@@ -4,8 +4,6 @@ import { useEffect, useState, useRef } from 'react';
 import { EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
-import Underline from '@tiptap/extension-underline';
-import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Highlight from '@tiptap/extension-highlight';
 import Subscript from '@tiptap/extension-subscript';
@@ -39,18 +37,18 @@ const TiptapEditor = ({ content, onChange }: TiptapProps) => {
       extensions: [
         StarterKit.configure({
           heading: { levels: [1, 2, 3] },
-          // horizontalRule is included by default
-        }),
-        Image.configure({ inline: false }),
-        Underline,
-        Link.configure({
-          openOnClick: false,
-          autolink: true,
-          HTMLAttributes: {
-            rel: 'noopener noreferrer nofollow',
-            target: '_blank',
+          // Underline is enabled by default
+          // Now, add your custom Link configuration here:
+          link: {
+            openOnClick: false,
+            autolink: true,
+            HTMLAttributes: {
+              rel: 'noopener noreferrer nofollow',
+              target: '_blank',
+            },
           },
         }),
+        Image.configure({ inline: false }),
         TextAlign.configure({ types: ['heading', 'paragraph'] }),
         Highlight.configure({ multicolor: true }),
         Subscript,

@@ -17,7 +17,8 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const slug = params.slug;
+  const prm = await params;   
+  const slug = prm.slug;
 
   const article = await prisma.article.findUnique({
     where: { slug: slug, published: true },
@@ -62,7 +63,8 @@ export async function generateMetadata(
 
 // The main page component
 export default async function ArticlePage({ params }: Props) {
-  const slug = params.slug;
+  const prm = await params;
+  const slug = prm.slug;
 
   const article = await prisma.article.findUnique({
     where: {
