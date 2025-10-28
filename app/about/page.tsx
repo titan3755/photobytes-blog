@@ -66,7 +66,7 @@ export default function AboutPage() {
           <p>
             PhotoBytes is run by a small, dedicated team. We believe in the power
             of sharing knowledge and building a community. While we may be small,
-            our ambitions are large, and we're excited to grow with you.
+            our ambitions are large, and we&apos;re excited to grow with you.
           </p>
 
           {/* --- 4. Team Members Section (as Cards) --- */}
@@ -125,8 +125,8 @@ export default function AboutPage() {
               Want to Join Us?
             </h2>
             <p className="text-lg text-blue-100 mt-4 max-w-xl mx-auto">
-              We're always looking for new perspectives. If you're interested in
-              writing for us, or just want to share your feedback, don't hesitate
+              We&apos;re always looking for new perspectives. If you&apos;re interested in
+              writing for us, or just want to share your feedback, don&apos;t hesitate
               to get in touch.
             </p>
             <Link

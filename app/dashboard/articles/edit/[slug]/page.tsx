@@ -78,8 +78,8 @@ const EditArticlePage = () => {
 
         setIsLoadingCategories(false);
 
-      } catch (e: any) {
-        setError(e.message || 'Failed to load article data.');
+      } catch {
+        setError('Failed to load article data.');
       } finally {
         setIsLoading(false);
       }
@@ -140,9 +140,8 @@ const EditArticlePage = () => {
         setSuccess(`Article updated successfully!`);
         setTimeout(() => router.push('/dashboard'), 1500);
 
-      } catch (err: any) {
-        console.error('Article update failed:', err);
-        setError(err.message || 'An error occurred while saving.');
+      } catch {
+        setError('An error occurred while saving.');
       }
     });
   };

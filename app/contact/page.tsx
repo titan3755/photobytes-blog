@@ -57,9 +57,9 @@ export default function ContactPage() {
         setName('');
         setEmail('');
       }
-    } catch (err: any) {
+    } catch {
       setFormStatus('');
-      setError(err.message || 'Failed to send message. Please try again.');
+      setError('Failed to send message. Please try again.');
     } finally {
       setIsLoading(false); // Unset loading
     }

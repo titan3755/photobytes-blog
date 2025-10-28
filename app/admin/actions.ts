@@ -45,11 +45,7 @@ export async function deleteCategory(categoryId: string) {
         revalidatePath('/admin');
         revalidatePath('/dashboard/articles/new');
         return { success: true };
-    } catch (error) {
-        console.error('Error deleting category:', error);
-        if (error instanceof Error && (error as any).code === 'P2003') {
-             return { success: false, message: 'Cannot delete category. Please ensure no articles are using it.' };
-        }
+    } catch {
         return { success: false, message: 'Failed to delete category.' };
     }
 }
@@ -288,7 +284,7 @@ export async function deleteArticle(articleId: string) {
 
 // --- Notification Actions ---
 // ... (sendNotification, markNotificationAsRead, deleteNotification) ...
-type TargetAudience = 'ALL_USERS' | 'ALL_BLOGGERS' | 'ALL_ADMINS' | { userId: string };
+export type TargetAudience = 'ALL_USERS' | 'ALL_BLOGGERS' | 'ALL_ADMINS' | { userId: string };
 interface SendNotificationData {
     title: string;
     description: string;

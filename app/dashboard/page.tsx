@@ -208,7 +208,7 @@ export default async function Dashboard() {
             </ul>
           ) : (
             <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-              You haven't placed any orders yet.
+              You haven&apos;t placed any orders yet.
             </p>
           )}
           <div className="mt-6 text-right">

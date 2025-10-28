@@ -78,11 +78,7 @@ export async function createArticle(data: ArticleData): Promise<CreateArticleRes
 
     return { success: true, articleId: newArticle.id };
 
-  } catch (error) {
-    console.error('Error creating article:', error);
-    if (error instanceof Error && (error as any).code === 'P2002') { // More specific check for unique constraint
-         return { success: false, message: 'This slug is already in use.' };
-    }
+  } catch {
     return { success: false, message: 'An internal error occurred while saving the article.' };
   }
 }

@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react';
 import { sendNotification } from './actions';
 import type { User } from '@prisma/client';
+// 1. Import the TargetAudience type from your actions file
+import type { TargetAudience } from './actions';
 
 type SimpleUser = Pick<User, 'id' | 'username' | 'email' | 'name'>;
 
@@ -10,11 +12,15 @@ interface SendNotificationFormProps {
     allUsers: SimpleUser[];
 }
 
+// 2. Define the specific type for the dropdown state
+type TargetType = 'ALL_USERS' | 'ALL_BLOGGERS' | 'ALL_ADMINS' | 'SPECIFIC_USER';
+
 export default function SendNotificationForm({ allUsers }: SendNotificationFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [url, setUrl] = useState('');
-  const [targetType, setTargetType] = useState<'ALL_USERS' | 'ALL_BLOGGERS' | 'ALL_ADMINS' | 'SPECIFIC_USER'>('ALL_USERS');
+  // 3. Apply the specific TargetType here
+  const [targetType, setTargetType] = useState<TargetType>('ALL_USERS');
   const [specificUserId, setSpecificUserId] = useState('');
   
   const [isPending, startTransition] = useTransition();
@@ -31,20 +37,28 @@ export default function SendNotificationForm({ allUsers }: SendNotificationFormP
       return;
     }
     
-    let target: any = targetType;
+    // --- START FIX ---
+    // 4. Declare target with the correct type first
+    let target: TargetAudience; 
+    
     if (targetType === 'SPECIFIC_USER') {
         if (!specificUserId) {
             setError('Please select a specific user.');
             return;
         }
-        target = { userId: specificUserId };
+        // 5. Assign the object type
+        target = { userId: specificUserId }; 
+    } else {
+        // 6. Assign the string literal type
+        target = targetType; 
     }
+    // --- END FIX ---
 
     startTransition(async () => {
       const result = await sendNotification({
         title,
         description,
-        url,
+        url: url || null, // Ensure null is passed if empty
         target: target,
       });
 
@@ -116,7 +130,8 @@ export default function SendNotificationForm({ allUsers }: SendNotificationFormP
         <select
             id="targetType"
             value={targetType}
-            onChange={(e) => setTargetType(e.target.value as any)}
+            // 5. FIX: Cast to the specific TargetType
+            onChange={(e) => setTargetType(e.target.value as TargetType)}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm text-black bg-white"
         >
             <option value="ALL_USERS">All Users</option>
@@ -163,3 +178,4 @@ export default function SendNotificationForm({ allUsers }: SendNotificationFormP
     </form>
   );
 }
+

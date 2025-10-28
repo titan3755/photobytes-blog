@@ -180,10 +180,9 @@ export default function ApplyPage() {
         'Application submitted successfully! We will review it soon.'
       );
       setApplicationStatus(ApplicationStatus.PENDING);
-    } catch (err: any) {
-      console.error('Application submission error:', err);
+    } catch {
       setSubmitStatus('error');
-      setSubmitMessage(err.message || 'Failed to submit application.');
+      setSubmitMessage('Failed to submit application.');
     } finally {
       setIsSubmitting(false);
     }

@@ -102,9 +102,8 @@ export default function NewArticlePage() {
         );
         router.push('/dashboard'); // Redirect on success
 
-      } catch (err: any) {
-        console.error("Article creation failed:", err);
-        setError(err.message || 'An error occurred while saving.');
+      } catch {
+        setError('An error occurred while saving.');
       }
     });
   };

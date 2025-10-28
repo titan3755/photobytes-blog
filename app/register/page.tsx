@@ -73,9 +73,8 @@ export default function Register() {
         const data = await res.json();
         setError(data.message || 'Registration failed. Please try again.');
       }
-    } catch (error: any) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
-      console.error('Registration failed:', error);
     } finally {
       setIsLoading(false);
     }
