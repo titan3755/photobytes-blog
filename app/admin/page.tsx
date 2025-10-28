@@ -1,7 +1,17 @@
 import prisma from '@/lib/prisma';
 import {
+  Article,
+  User,
+  ContactMessage,
+  Role,
+  BloggerApplication,
   ApplicationStatus,
+  Category,
+  Notification,
+  Comment,
+  Order,
   OrderStatus,
+  Prisma, // 1. Import Prisma
 } from '@prisma/client';
 import UserRowActions from './UserRowActions';
 import ContactMessageRowActions from './ContactMessageRowActions';
@@ -104,6 +114,21 @@ function OrderStatusBadge({ status }: { status: OrderStatus }) {
   );
 }
 
+// --- 4. Define Types for our paginated data ---
+type AdminUser = Pick<User, 'id' | 'name' | 'username' | 'email' | 'createdAt' | 'role' | 'canComment'>;
+type AdminArticle = Article & { author: Pick<User, 'name' | 'username' | 'email'> | null };
+type AdminOrder = Order & { author: Pick<User, 'name' | 'username' | 'email'> | null };
+type AdminComment = Comment & { 
+  author: Pick<User, 'name' | 'username' | 'email'> | null,
+  article: Pick<Article, 'title' | 'slug'>
+};
+type AdminNotification = Notification & { _count: { userNotifications: number }};
+type AdminBloggerApp = BloggerApplication & { user: Pick<User, 'name' | 'username' | 'email'> | null };
+// --- FIX: Add type for Active Orders ---
+type ActiveOrder = (Order & {
+    author: { name: string | null; username: string | null; } | null;
+    _count: { messages: number; };
+})
 
 // --- Main Page Component ---
 export default async function AdminPage({
@@ -111,22 +136,21 @@ export default async function AdminPage({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) {
-  // noStore(); // Removed this as 'export const dynamic' is preferred
+  // noStore(); // Removed this
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') {
     redirect('/forbidden');
   }
 
-  const sp = await searchParams;
-  const currentTab = sp.tab || 'home';
-  const currentPage = Number(sp.page) || 1;
+  const currentTab = searchParams.tab || 'home';
+  const currentPage = Number(searchParams.page) || 1;
   const pageSize = 10;
   const skip = (currentPage - 1) * pageSize;
   
   let data: any = { pagination: { currentPage: 1, totalPages: 1 } }; 
   
   if (currentTab === 'home') {
-    // ... (data fetching for home tab remains the same) ...
+    // ... (data fetching for home tab) ...
     const [
       totalUsers, totalArticles, publishedArticlesCount, totalComments,
       totalOrders, pendingOrders, unreadMessagesCount, pendingApplicationsCount,
@@ -145,16 +169,17 @@ export default async function AdminPage({
       prisma.category.count(),
     ]);
 
-    // ... (Chart data processing remains the same) ...
+    // ... (Chart data processing) ...
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const signupsByDay = allUsers
       .filter(user => new Date(user.createdAt) > sevenDaysAgo)
-      .reduce((acc, user) => {
+      // --- FIX: Type 'acc' as Record<string, number> ---
+      .reduce((acc: Record<string, number>, user) => {
         const day = new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         acc[day] = (acc[day] || 0) + 1;
         return acc;
-      }, {} as Record<string, number>);
+      }, {});
     const last7DaysMap = new Map<string, number>();
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -301,13 +326,12 @@ export default async function AdminPage({
     });
   }
 
-  // --- START: Hydration Fix ---
-  // Pre-render table rows into variables
+  // --- START: Hydration Fix (Pre-render rows) ---
   let userRows, articleRows, orderRows, messageRows, commentRows, applicationRows, notificationRows;
 
   if (currentTab === 'users') {
     userRows = data.allUsers.length > 0 ? (
-      data.allUsers.map((user: any) => (
+      data.allUsers.map((user: AdminUser) => ( // --- FIX: Use AdminUser type ---
         <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
           <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm font-medium text-gray-900 dark:text-white">{user.name || user.username || 'N/A'}</div> </td>
           <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm text-gray-500 dark:text-gray-400">{user.email || 'N/A'}</div> </td>
@@ -324,7 +348,7 @@ export default async function AdminPage({
 
   if (currentTab === 'articles') {
     articleRows = data.allArticles.length > 0 ? (
-      data.allArticles.map((article: any) => (
+      data.allArticles.map((article: AdminArticle) => ( // --- FIX: Use AdminArticle type ---
         <tr key={article.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
           <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-xs" title={article.title}>{article.title}</div></td>
           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{article.author?.name || article.author?.username || article.author?.email || 'N/A'}</td>
@@ -341,7 +365,7 @@ export default async function AdminPage({
 
   if (currentTab === 'orders') {
     orderRows = data.allOrders.length > 0 ? (
-      data.allOrders.map((order: any) => (
+      data.allOrders.map((order: AdminOrder) => ( // --- FIX: Use AdminOrder type ---
         <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</td>
           <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm font-medium text-gray-900 dark:text-white">{order.author?.name || order.author?.username}</div> <div className="text-xs text-gray-500 dark:text-gray-400">{order.author?.email}</div> </td>
@@ -359,7 +383,7 @@ export default async function AdminPage({
 
   if (currentTab === 'messages') {
     messageRows = data.contactMessages.length > 0 ? (
-      data.contactMessages.map((message: any) => (
+      data.contactMessages.map((message: ContactMessage) => ( // --- FIX: Use ContactMessage type ---
         <tr key={message.id} className={`${message.isRead ? 'opacity-70 dark:opacity-60' : 'font-semibold'} hover:bg-gray-50 dark:hover:bg-gray-700`}>
           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(message.createdAt).toLocaleString()}</td>
           <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900 dark:text-white">{message.name}</div></td>
@@ -376,7 +400,7 @@ export default async function AdminPage({
 
   if (currentTab === 'comments') {
     commentRows = data.allComments.length > 0 ? (
-      data.allComments.map((comment: any) => (
+      data.allComments.map((comment: AdminComment) => ( // --- FIX: Use AdminComment type ---
         <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
           <td className="px-6 py-4 max-w-sm"><p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={comment.content}>{comment.content}</p></td>
           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{comment.author?.name || comment.author?.username || 'N/A'}</td>
@@ -392,7 +416,7 @@ export default async function AdminPage({
   
   if (currentTab === 'applications') {
     applicationRows = data.bloggerApplications.length > 0 ? (
-      data.bloggerApplications.map((app: any) => (
+      data.bloggerApplications.map((app: AdminBloggerApp) => ( // --- FIX: Use AdminBloggerApp type ---
         <tr key={app.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
           <td className="px-6 py-4 whitespace-nowrap"> <div className="text-sm font-medium text-gray-900 dark:text-white">{app.user?.name || app.user?.username || 'N/A'}</div> <div className="text-xs text-gray-500 dark:text-gray-400">{app.user?.email || 'N/A'}</div> <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Applied: {new Date(app.createdAt).toLocaleDateString()}</div> </td>
           <td className="px-6 py-4 max-w-xs"> <p className="text-sm text-gray-700 dark:text-gray-300 truncate" title={app.reason}> {app.reason} </p> </td>
@@ -403,13 +427,13 @@ export default async function AdminPage({
         </tr>
       ))
     ) : (
-      <tr> <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"> No blogger applications received yet. </td> </tr>
+      <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"> No blogger applications received yet. </td></tr>
     );
   }
 
   if (currentTab === 'notifications') {
     notificationRows = data.allNotifications.length > 0 ? (
-      data.allNotifications.map((notif: any) => (
+      data.allNotifications.map((notif: AdminNotification) => ( // --- FIX: Use AdminNotification type ---
         <tr key={notif.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
           <td className="px-6 py-4 whitespace-nowrap">
             <div className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-xs" title={notif.title}>{notif.title}</div>
@@ -511,7 +535,7 @@ export default async function AdminPage({
           {/* --- ORDERS TAB --- */}
           {currentTab === 'orders' && (
             <>
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"> <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Active Order Messages</h2> <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-96 overflow-y-auto"> <ul className="divide-y divide-gray-200 dark:divide-gray-700"> {data.activeOrders.length > 0 ? ( data.activeOrders.map((order: any) => ( <li key={order.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700"> <div className="min-w-0"> <p className="text-sm font-medium text-gray-900 dark:text-white">{order.category}</p> <p className="text-xs text-gray-500 dark:text-gray-400"> Client: {order.author?.name || order.author?.username || 'N/A'} </p> </div> <div className="flex items-center gap-4 mt-3 sm:mt-0 flex-shrink-0"> <OrderStatusBadge status={order.status} /> <AdminOrderMessageButton orderId={order.id} unreadCount={order._count.messages} /> </div> </li> )) ) : ( <li className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center"> No active orders or messages. </li> )} </ul> </div> </div>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"> <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Active Order Messages</h2> <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-96 overflow-y-auto"> <ul className="divide-y divide-gray-200 dark:divide-gray-700"> {data.activeOrders.length > 0 ? ( data.activeOrders.map((order: ActiveOrder) => ( <li key={order.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700"> <div className="min-w-0"> <p className="text-sm font-medium text-gray-900 dark:text-white">{order.category}</p> <p className="text-xs text-gray-500 dark:text-gray-400"> Client: {order.author?.name || order.author?.username || 'N/A'} </p> </div> <div className="flex items-center gap-4 mt-3 sm:mt-0 flex-shrink-0"> <OrderStatusBadge status={order.status} /> <AdminOrderMessageButton orderId={order.id} unreadCount={order._count.messages} /> </div> </li> )) ) : ( <li className="p-4 text-sm text-gray-500 dark:text-gray-400 text-center"> No active orders or messages. </li> )} </ul> </div> </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">All Orders</h2> <div className="overflow-x-auto"> <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Budget</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th><th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {orderRows}
@@ -534,7 +558,7 @@ export default async function AdminPage({
           {/* --- COMMENTS TAB --- */}
           {currentTab === 'comments' && (
              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Manage Comments </h2> <div className="overflow-x-auto"> <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Comment</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Article</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Posted</th><th scope="col" className="relative px-6 py-3 text-right"><span className="sr-only">Actions</span></th></tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"> Recent Comments </h2> <div className="overflow-x-auto"> <table className="w-full divide-y divide-gray-200 dark:divide-gray-700"><thead className="bg-gray-50 dark:bg-gray-700"><tr> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Comment</th> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">On Article</th> <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th> <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th> </tr></thead><tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {commentRows}
                 </tbody></table> </div>
               <AdminPagination currentPage={data.pagination.currentPage} totalPages={data.pagination.totalPages} />
@@ -586,7 +610,7 @@ export default async function AdminPage({
                         <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-64 overflow-y-auto">
                             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {data.allCategories.length > 0 ? (
-                                    data.allCategories.map((category: any) => (
+                                    data.allCategories.map((category: Category) => ( // --- FIX: Use Category type ---
                                     <li key={category.id} className="px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <div>
                                             <p className="text-sm font-medium text-gray-900 dark:text-white">{category.name}</p>

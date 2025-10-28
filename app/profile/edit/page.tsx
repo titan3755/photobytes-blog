@@ -88,10 +88,9 @@ export default function EditProfilePage() {
           },
         });
 
-      } catch (err: any) {
-        console.error('Profile update error:', err);
+      } catch {
         setSubmitStatus('error');
-        setSubmitMessage(err.message || 'An error occurred.');
+        setSubmitMessage('An error occurred.');
       }
     });
   };
