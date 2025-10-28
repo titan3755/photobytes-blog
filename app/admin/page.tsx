@@ -114,7 +114,7 @@ function OrderStatusBadge({ status }: { status: OrderStatus }) {
   );
 }
 
-// --- 4. Define Types for our paginated data ---
+// --- 2. Define Types for our paginated data ---
 type AdminUser = Pick<User, 'id' | 'name' | 'username' | 'email' | 'createdAt' | 'role' | 'canComment'>;
 type AdminArticle = Article & { author: Pick<User, 'name' | 'username' | 'email'> | null };
 type AdminOrder = Order & { author: Pick<User, 'name' | 'username' | 'email'> | null };
@@ -124,7 +124,6 @@ type AdminComment = Comment & {
 };
 type AdminNotification = Notification & { _count: { userNotifications: number }};
 type AdminBloggerApp = BloggerApplication & { user: Pick<User, 'name' | 'username' | 'email'> | null };
-// --- FIX: Add type for Active Orders ---
 type ActiveOrder = (Order & {
     author: { name: string | null; username: string | null; } | null;
     _count: { messages: number; };
@@ -142,15 +141,16 @@ export default async function AdminPage({
     redirect('/forbidden');
   }
 
+  // 2. Determine the current tab
   const currentTab = searchParams.tab || 'home';
   const currentPage = Number(searchParams.page) || 1;
-  const pageSize = 10;
+  const pageSize = 10; // 10 items per page
   const skip = (currentPage - 1) * pageSize;
   
-  let data: any = { pagination: { currentPage: 1, totalPages: 1 } }; 
+  let data: any = { pagination: { currentPage: 1, totalPages: 1 } }; // Init data object
   
   if (currentTab === 'home') {
-    // ... (data fetching for home tab) ...
+    // --- Fetch data ONLY for the Home tab ---
     const [
       totalUsers, totalArticles, publishedArticlesCount, totalComments,
       totalOrders, pendingOrders, unreadMessagesCount, pendingApplicationsCount,
@@ -169,13 +169,13 @@ export default async function AdminPage({
       prisma.category.count(),
     ]);
 
-    // ... (Chart data processing) ...
+    // Process data for charts
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const signupsByDay = allUsers
       .filter(user => new Date(user.createdAt) > sevenDaysAgo)
-      // --- FIX: Type 'acc' as Record<string, number> ---
-      .reduce((acc: Record<string, number>, user) => {
+      // --- FIX: Type 'acc' and 'user' ---
+      .reduce((acc: Record<string, number>, user: { createdAt: Date }) => {
         const day = new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         acc[day] = (acc[day] || 0) + 1;
         return acc;
@@ -188,6 +188,7 @@ export default async function AdminPage({
       last7DaysMap.set(dayKey, signupsByDay[dayKey] || 0);
     }
     
+    // Pass all data to the 'data' object
     data = {
       ...data,
       stats: {
