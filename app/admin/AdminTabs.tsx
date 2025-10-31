@@ -11,6 +11,7 @@ import {
   Bell,
   Mail,
   List,
+  ShieldCheck
 } from 'lucide-react';
 
 const tabs = [
@@ -22,6 +23,7 @@ const tabs = [
   { name: 'Comments', href: 'comments', icon: MessageSquare },
   { name: 'Applications', href: 'applications', icon: List },
   { name: 'Notifications', href: 'notifications', icon: Bell },
+  { name: 'Status', href: 'status', icon: ShieldCheck },
 ];
 
 function classNames(...classes: string[]) {

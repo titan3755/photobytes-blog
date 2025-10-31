@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
-import { Role, ApplicationStatus, OrderStatus } from '@prisma/client';
+import { Role, ApplicationStatus, OrderStatus, ServiceName, OperationalStatus } from '@prisma/client';
 import { auth } from '@/auth';
 
 // ... (createCategory, deleteCategory, getCategories) ...
@@ -453,6 +453,34 @@ export async function deleteOrder(
   } catch (error) {
     console.error('Error deleting order:', error);
     return { success: false, message: 'Failed to delete order.' };
+  }
+}
+
+async function checkAdminAuth() {
+  const session = await auth();
+  if (session?.user?.role !== Role.ADMIN) {
+    throw new Error('Unauthorized: Admin access required.');
+  }
+  return session; // Return session for convenience
+}
+
+export async function updateServiceStatus(
+  serviceName: ServiceName,
+  status: OperationalStatus,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    await checkAdminAuth(); // Secure the action
+
+    await prisma.serviceStatus.update({
+      where: { serviceName },
+      data: { status },
+    });
+
+    revalidatePath('/admin'); // Revalidate admin page
+    revalidatePath('/status'); // Revalidate public status page
+    return { success: true, message: 'Status updated successfully.' };
+  } catch (error) {
+    return { success: false, message: (error as Error).message };
   }
 }
 
