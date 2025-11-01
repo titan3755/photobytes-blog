@@ -1,6 +1,6 @@
 # PhotoBytes Blog
 
-## {ACTIVE DEVELOPMENT ONGOING}
+## {PRODUCTION MODE}
 
 ### ToDo
 -> (...) <br>
