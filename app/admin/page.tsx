@@ -11,6 +11,9 @@ import {
   Comment,
   Order,
   OrderStatus,
+  type ServiceStatus,
+  ServiceName, // --- ADD THIS ---
+  OperationalStatus,
 } from '@prisma/client';
 import UserRowActions from './UserRowActions';
 import ContactMessageRowActions from './ContactMessageRowActions';
@@ -26,6 +29,7 @@ import AdminStats from './AdminStats';
 import AdminOrderMessageButton from './AdminOrderMessageButton';
 import AdminTabs from './AdminTabs';
 import AdminPagination from './AdminPagination';
+import StatusManager from './SiteStatus';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -148,6 +152,7 @@ export default async function AdminPage({
   const skip = (currentPage - 1) * pageSize;
   
   let data: any = { pagination: { currentPage: 1, totalPages: 1 } }; // Init data object
+  let serviceStatuses: ServiceStatus[] = [];
   
   if (currentTab === 'home') {
     // --- Fetch data ONLY for the Home tab ---
@@ -325,6 +330,21 @@ export default async function AdminPage({
     data.allCategories = await prisma.category.findMany({
       orderBy: { name: 'asc' },
     });
+  } else if (currentTab === 'status') { 
+      // Seed the statuses if they don't exist
+      await prisma.serviceStatus.upsert({
+        where: { serviceName: ServiceName.STUDIOS },
+        update: {},
+        create: { serviceName: ServiceName.STUDIOS, status: OperationalStatus.OPERATIONAL },
+      });
+      await prisma.serviceStatus.upsert({
+        where: { serviceName: ServiceName.BLOG },
+        update: {},
+        create: { serviceName: ServiceName.BLOG, status: OperationalStatus.OPERATIONAL },
+      });
+
+      // Fetch all statuses
+      serviceStatuses = await prisma.serviceStatus.findMany();
   }
 
   // --- START: Hydration Fix (Pre-render rows) ---
@@ -463,6 +483,9 @@ export default async function AdminPage({
     ) : (
       <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No notifications sent yet.</td></tr>
     );
+  }
+  if (currentTab === 'status') {
+    // No rows to pre-render for status tab
   }
   // --- END: Hydration Fix ---
 
@@ -629,6 +652,16 @@ export default async function AdminPage({
                 </div>
             </div>
           )}
+          {/* --- STATUS TAB --- */}
+          {currentTab === 'status' && (
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+                Service Status Management
+              </h2>
+              <StatusManager services={serviceStatuses} />
+            </div>
+          )}
+          {/* --- END OF TABS CONTENT --- */}
 
         </div>
       </div>
