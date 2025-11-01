@@ -50,37 +50,33 @@ export default async function Home({
 
   return (
     <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 p-8 min-w-screen flex flex-col items-center justify-center">
-      <div className="w-full max-w-7xl mx-auto">
+      <div className="w-full max-w-full mx-auto">
         
         {/* --- START: New Hero Section --- */}
-        <section className="relative w-full h-[60vh] min-h-[450px] flex items-center justify-center rounded-b-lg shadow-lg dark:shadow-2xl mb-8 overflow-hidden">
+        <section className="relative w-full h-[70vh] min-h-[450px] flex flex-col items-center justify-center rounded-b-lg shadow-lg dark:shadow-2xl mb-8 overflow-hidden">
           
-          {/* --- START FIX: Parallax Wrapper --- */}
-          {/* This wrapper holds the fixed image and overlay */}
-          <div className="absolute inset-0 -z-10">
-            <div className="fixed inset-0"> {/* This container creates the parallax effect */}
-              <Image
-                src="https://images.pexels.com/photos/3408744/pexels-photo-3408744.jpeg"
-                alt="Abstract technology background"
-                fill
-                priority
-                className="object-cover"
-                // The conflicting 'style' prop has been removed
-              />
-              {/* This overlay adds a slight dimming for better text readability */}
-              <div className="absolute inset-0 bg-black/40"></div>
-            </div>
-          </div>
+          {/* --- START FIX: Simplified Background --- */}
+          {/* We remove the 'fixed' wrapper. The Image with 'fill' will
+              now be 'absolute' and fill its 'relative' parent <section> */}
+          <Image
+            src="https://images.pexels.com/photos/3408744/pexels-photo-3408744.jpeg"
+            alt="Abstract technology background"
+            fill
+            priority
+            className="object-cover rounded-2xl" // Sits in the background
+          />
+          {/* This overlay adds a slight dimming for better text readability */}
+          <div className="absolute inset-0 bg-black/40 -z-10"></div>
           {/* --- END FIX --- */}
 
           {/* 2. Glassmorphism Content Card */}
-          <div className="relative z-10 max-w-4xl mx-auto text-center p-8 md:p-12 
+          <div className="relative z-10 min-w-full flex flex-col justify-center items-center mx-auto min-h-full text-center p-8 md:p-12 
                           bg-white/10 dark:bg-black/30 
                           backdrop-blur-lg 
                           rounded-2xl 
                           border border-white/20 
                           shadow-2xl">
-            <h1 className="text-4xl sm:text-6xl font-extrabold text-white mb-4 
+            <h1 className="text-4xl sm:text-7xl font-extrabold text-white mb-4 
                            shadow-black [text-shadow:_0_2px_4px_rgb(0_0_0_/_50%)]">
               PhotoBytes Blog
             </h1>
