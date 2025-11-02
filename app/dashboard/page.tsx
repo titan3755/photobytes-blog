@@ -6,28 +6,48 @@ import {
   ApplicationStatus,
   UserNotification,
   Notification,
-  Prisma, // 1. Import Prisma
+  Comment,
+  Prisma,
+  Order,
+  OrderStatus,
 } from '@prisma/client';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar';
 import UserArticleRow from '@/components/dashboard/UserArticleRow';
 import NotificationItem from '@/components/dashboard/NotificationItem';
-// --- START FIX: Import noStore ---
-import { unstable_noStore as noStore } from 'next/cache';
-// --- END FIX ---
-
-// --- 1. Import the new components ---
+// import { unstable_noStore as noStore } from 'next/cache'; // We no longer need this here
 import DashboardCard from '@/components/dashboard/DashboardCard';
 import ApplicationStatusDisplay from '@/components/dashboard/ApplicationStatusDisplay';
 import DashboardOrderActions from '@/components/dashboard/DashboardOrderActions';
+// --- 1. Import the new SessionRefresher ---
+import SessionRefresher from './SessionRefresher';
 
-// --- 2. REMOVED the local DashboardCard function ---
-
-// --- 3. REMOVED the local ApplicationStatusDisplay function ---
-
-
-// Define the type for the comment query
+// ... (OrderStatusBadge and CommentWithArticle type definitions remain the same) ...
+function OrderStatusBadge({ status }: { status: OrderStatus }) {
+  let colors = '';
+  switch (status) {
+    case 'PENDING':
+      colors = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      break;
+    case 'IN_PROGRESS':
+      colors = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      break;
+    case 'COMPLETED':
+      colors = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      break;
+    case 'CANCELLED':
+      colors = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      break;
+    default:
+      colors = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+  }
+  return (
+    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colors}`}>
+      {status.replace('_', ' ')}
+    </span>
+  );
+}
 type CommentWithArticle = Prisma.CommentGetPayload<{
   include: { 
     article: { 
@@ -36,21 +56,19 @@ type CommentWithArticle = Prisma.CommentGetPayload<{
   }
 }>;
 
+
 export default async function Dashboard() {
-  // --- START FIX: Force this page to be dynamic ---
-  noStore();
-  // --- END FIX ---
+  // noStore(); // We removed this, the jwt callback's noStore() handles it
   
-  const session = await auth();
+  const session = await auth(); // This session might be stale
 
   if (!session?.user?.id) {
-// ... (rest of the file is identical) ...
     console.error('Session or user ID not found, redirecting to login.');
     redirect('/api/auth/signin?error=SessionRequired');
   }
 
   const userId = session.user.id;
-  const userRole = session.user.role; // This will now be fresh
+  const userRole = session.user.role; // This is the (potentially stale) role
   const canPostArticles = userRole === Role.ADMIN || userRole === Role.BLOGGER;
 
   // --- Fetch Notifications ---
@@ -66,7 +84,7 @@ export default async function Dashboard() {
   });
   const unreadCount = userNotifications.filter((n) => !n.isRead).length;
 
-  // --- Fetch Articles (if user is blogger/admin) ---
+  // --- Fetch Articles ---
   let userArticles: Article[] = [];
   if (canPostArticles) {
     userArticles = await prisma.article.findMany({
@@ -75,10 +93,11 @@ export default async function Dashboard() {
     });
   }
 
-  // --- 3. REWORKED: Fetch Application Status *only if needed* ---
+  // --- Fetch Application Status ---
   let applicationStatus: ApplicationStatus | null = null;
-  if (userRole === Role.USER) {
-    // Only query the application status if the user is still a 'USER'
+  // We *always* fetch this if the user isn't an admin,
+  // so we can compare it to their session role.
+  if (userRole !== Role.ADMIN) {
     const application = await prisma.bloggerApplication.findUnique({
       where: { userId: userId },
       select: { status: true },
@@ -99,19 +118,25 @@ export default async function Dashboard() {
     },
   });
 
+  // --- Fetch Recent Orders ---
   const userOrders = await prisma.order.findMany({
     where: { authorId: userId },
     orderBy: { createdAt: 'desc' },
     take: 5,
   });
   
-  // Safely create the joinedDate string
   const joinedDate = session.user.createdAt 
     ? new Date(session.user.createdAt).toLocaleDateString() 
     : null;
 
   return (
     <div className="min-h-screen w-full p-8 min-w-screen flex flex-col items-center justify-center">
+      {/* --- 2. Add the SessionRefresher component --- */}
+      <SessionRefresher 
+        sessionRole={userRole} 
+        applicationStatus={applicationStatus} 
+      />
+
       <div className="max-w-4xl w-full mx-auto space-y-8">
         {/* Welcome Header */}
         <div className="flex justify-between items-center mb-6">
@@ -177,6 +202,7 @@ export default async function Dashboard() {
           )}
         </DashboardCard>
 
+        {/* Orders Card */}
         <DashboardCard title="Your Recent Orders" className="md:col-span-2">
           {userOrders.length > 0 ? (
             <ul className="space-y-4">
@@ -200,7 +226,6 @@ export default async function Dashboard() {
                     </p>
                   </div>
                   <div className="flex-shrink-0 ml-4">
-                    {/* 5. Use the new Client Component */}
                     <DashboardOrderActions order={order} />
                   </div>
                 </li>
@@ -220,9 +245,10 @@ export default async function Dashboard() {
             </Link>
           </div>
         </DashboardCard>
-
+        
         {/* Grid Layout for Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
           {/* --- Profile Information Card --- */}
           <DashboardCard title="Your Profile" className="md:col-span-1">
             <div className="flex items-center space-x-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
@@ -266,7 +292,6 @@ export default async function Dashboard() {
                 </p>
               )}
             </div>
-            {/* --- START MODIFICATION: Added flex and View Profile link --- */}
             <div className="mt-6 flex justify-end gap-3">
               <Link
                 href="/profile"
@@ -281,9 +306,8 @@ export default async function Dashboard() {
                 Edit Profile
               </Link>
             </div>
-            {/* --- END MODIFICATION --- */}
           </DashboardCard>
-
+          
           {/* --- Updated Comments Card --- */}
           <DashboardCard title="Your Recent Comments" className="md:col-span-1">
              {userComments.length > 0 ? (
@@ -313,7 +337,7 @@ export default async function Dashboard() {
              )}
           </DashboardCard>
         </div>
-
+        
         {/* --- REWORKED: Logic for Article/Application sections --- */}
         
         {/* If user is Admin or Blogger, show Article Management */}

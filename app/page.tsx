@@ -21,8 +21,9 @@ export default async function Home({
   };
 }) {
 
-  const searchQuery = searchParams?.search || '';
-  const currentPage = Number(searchParams?.page) || 1;
+  const sp = await searchParams;
+  const searchQuery = sp?.search || '';
+  const currentPage = Number(sp?.page) || 1;
   const pageSize = 6;
   const skip = (currentPage - 1) * pageSize;
 
