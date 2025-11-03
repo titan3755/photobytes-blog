@@ -81,14 +81,13 @@ export async function toggleCommentStatus(
     const newStatus = !currentStatus;
     await prisma.user.update({
       where: { id: userId },
-      data: { canComment: newStatus },
+      // --- START FIX: Increment sessionVersion ---
+      data: { 
+        canComment: newStatus,
+        sessionVersion: { increment: 1 } 
+      },
+      // --- END FIX ---
     });
-    
-    // --- START FIX: Delete the user's session(s) ---
-    await prisma.session.deleteMany({
-      where: { userId: userId },
-    });
-    // --- END FIX ---
 
     revalidatePath('/admin');
     revalidatePath('/dashboard');
@@ -110,14 +109,13 @@ export async function updateUserRole(userId: string, newRole: Role) {
   try {
     await prisma.user.update({
       where: { id: userId },
-      data: { role: newRole },
+      // --- START FIX: Increment sessionVersion ---
+      data: { 
+        role: newRole,
+        sessionVersion: { increment: 1 }
+      },
+      // --- END FIX ---
     });
-    
-    // --- START FIX: Delete the user's session(s) ---
-    await prisma.session.deleteMany({
-      where: { userId: userId },
-    });
-    // --- END FIX ---
 
     revalidatePath('/admin');
     revalidatePath('/dashboard');
@@ -202,15 +200,14 @@ export async function approveBloggerApplication(
       }),
       prisma.user.update({
         where: { id: userId },
-        data: { role: Role.BLOGGER },
+        // --- START FIX: Increment sessionVersion ---
+        data: { 
+          role: Role.BLOGGER,
+          sessionVersion: { increment: 1 }
+        },
+        // --- END FIX ---
       }),
     ]);
-
-    // --- START FIX: Delete the user's session(s) ---
-    await prisma.session.deleteMany({
-      where: { userId: userId },
-    });
-    // --- END FIX ---
 
     revalidatePath('/admin');
     revalidatePath('/dashboard');
@@ -232,10 +229,12 @@ export async function rejectBloggerApplication(applicationId: string) {
       data: { status: ApplicationStatus.REJECTED },
     });
 
-    // Also delete session on rejection (for consistency)
-    await prisma.session.deleteMany({
-      where: { userId: app.userId },
+    // --- START FIX: Increment sessionVersion (for consistency) ---
+    await prisma.user.update({
+      where: { id: app.userId },
+      data: { sessionVersion: { increment: 1 } }
     });
+    // --- END FIX ---
 
     revalidatePath('/admin');
     revalidatePath('/dashboard');
@@ -424,10 +423,17 @@ export async function updateOrderStatus(
   }
 
   try {
-    await prisma.order.update({
+    const order = await prisma.order.update({
       where: { id: orderId },
       data: { status: newStatus },
     });
+
+    // --- START FIX: Increment sessionVersion for the user ---
+    await prisma.user.update({
+      where: { id: order.authorId },
+      data: { sessionVersion: { increment: 1 } }
+    });
+    // --- END FIX ---
     revalidatePath('/admin');
     return { success: true };
   } catch (error) {

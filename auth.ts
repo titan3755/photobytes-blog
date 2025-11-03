@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 import { authConfig } from './auth.config';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcrypt';
-import type { Role } from '@prisma/client';
+import type { Role, User } from '@prisma/client'; // Import User type
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 
@@ -37,53 +37,80 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    // --- START FIX: Changed if(user) to if(user?.id) ---
-    async jwt({ token, user }) {
+    // --- START: MODIFIED JWT CALLBACK WITH SESSIONVERSION ---
+    async jwt({ token, user, trigger }) {
       noStore(); 
-      // Check for user AND user.id
-      if (user?.id) { // 'user' is only available on sign-in and has a defined id
-        token.id = user.id; // Now this is type-safe
-        // @ts-ignore
-        token.role = user.role;
-        // @ts-ignore
-        token.username = user.username;
-        // @ts-ignore
-        token.canComment = user.canComment;
-        // @ts-ignore
-        token.createdAt = user.createdAt;
+      
+      // a) On initial sign-in
+      if (user?.id) {
+        const dbUser = user as User; // Cast to full User
+        token.id = dbUser.id;
+        token.role = dbUser.role;
+        token.username = dbUser.username;
+        token.canComment = dbUser.canComment;
+        token.createdAt = dbUser.createdAt;
+        token.sessionVersion = dbUser.sessionVersion; // <-- Add session version
       }
 
+      // b) On *manual* update (from SessionRefresher), force re-fetch
+      if (trigger === 'update' && token.id) {
+        const dbUser = await prisma.user.findUnique({
+         where: { id: token.id as string },
+         select: { role: true, username: true, name: true, email: true, image: true, createdAt: true, canComment: true, sessionVersion: true },
+       });
+        if (dbUser) {
+         token.role = dbUser.role;
+         token.username = dbUser.username;
+         token.name = dbUser.name;
+         token.email = dbUser.email;
+         token.picture = dbUser.image;
+         token.createdAt = dbUser.createdAt;
+         token.canComment = dbUser.canComment;
+         token.sessionVersion = dbUser.sessionVersion; // <-- Update version
+       }
+     }
+
+      // c) On *every other* session check, do a *cheap* query
       if (token.id) {
-         const dbUser = await prisma.user.findUnique({
+        const dbSessionVersion = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: {
-            role: true,
-            username: true,
-            name: true,
-            email: true,
-            image: true,
-            createdAt: true,
-            canComment: true,
-      },
+          select: { sessionVersion: true }
         });
-         if (dbUser) {
-          // Update the token with the fresh data
-          token.role = dbUser.role;
-          token.username = dbUser.username;
-          token.name = dbUser.name;
-          token.email = dbUser.email;
-          token.picture = dbUser.image;
-          token.createdAt = dbUser.createdAt;
-          token.canComment = dbUser.canComment;
+        
+        // @ts-ignore
+        if (dbSessionVersion && dbSessionVersion.sessionVersion !== token.sessionVersion) {
+          console.log("Stale sessionVersion detected, re-fetching user data.");
+          // If versions mismatch, re-fetch all data
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: {
+              role: true,
+              username: true,
+              name: true,
+              email: true,
+              image: true,
+              createdAt: true,
+              canComment: true,
+              sessionVersion: true, // <-- Add session version
+            },
+          });
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.username = dbUser.username;
+            token.name = dbUser.name;
+            token.email = dbUser.email;
+            token.picture = dbUser.image;
+            token.createdAt = dbUser.createdAt;
+            token.canComment = dbUser.canComment;
+            token.sessionVersion = dbUser.sessionVersion; // <-- Update version
+          }
         }
       }
       
       return token;
     },
-    // --- END FIX ---
+    // --- END: MODIFIED JWT CALLBACK ---
     
-    // Session callback is now the main source of truth for the session object
-    // It receives the 'user' object from the database session
     async session({ session, user, token }) {
       if (user && session.user) {
         session.user.id = user.id;
@@ -91,24 +118,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.username = user.username;
         session.user.canComment = user.canComment;
         session.user.createdAt = user.createdAt;
-        // name, email, and image are already handled by default
       } else if (token && session.user) {
-         // Fallback for cases where token is still used (less common with db strategy)
-         session.user.id = token.id as string;
-         session.user.role = token.role as Role;
-         session.user.username = token.username as string | null;
-         session.user.canComment = token.canComment as boolean;
-         session.user.createdAt = token.createdAt as Date | string | null;
+        // This is the one that will be used with JWT strategy
+        session.user.id = token.id as string;
+        session.user.role = token.role as Role;
+        session.user.username = token.username as string | null;
+        session.user.canComment = token.canComment as boolean;
+        session.user.createdAt = token.createdAt as Date | string | null;
       }
       return session;
     },
 
-    // Authorized callback now correctly receives the session from the DB
+    // Authorized callback (middleware)
     authorized({ auth, request }) {
       const { nextUrl } = request;
       const pathname = nextUrl.pathname;
-      const isLoggedIn = !!auth?.user;
-      const userRole = auth?.user?.role;
+      
+      // --- FIX: In v5, `auth.user` is for database strategy. ---
+      // --- Middleware must read from `auth` (if JWT) or `auth.token` ---
+      const isLoggedIn = !!auth; 
+      // @ts-ignore
+      const userRole = auth?.token?.role || auth?.user?.role; // Read from token first, fallback to user
       const isAdmin = userRole === 'ADMIN';
       const isBlogger = userRole === 'BLOGGER';
 
@@ -136,7 +166,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       if (
         pathname.startsWith('/dashboard') ||
-        pathname.startsWith('/profile')
+        pathname.startsWith('/profile') ||
+        pathname.startsWith('/order') // --- FIX: Added /order to protected routes ---
       ) {
         if (!isLoggedIn) return false;
         return true;
