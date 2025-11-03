@@ -7,58 +7,57 @@ import CommentsSection from '@/components/blog/CommentsSection';
 import SuggestedArticleCard, {
   type PartialArticle,
 } from '@/components/blog/SuggestedArticleCard';
+import { unstable_noStore as noStore }  from 'next/cache';
 
 type Props = {
   params: { slug: string };
 };
 
 // ... (generateMetadata function remains the same) ...
-export async function generateMetadata(
-  { params }: Props,
-  // parent: ResolvingMetadata
-): Promise<Metadata> {
-  const prm = await params;   
-  const slug = prm.slug;
-
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const pm = await params;
+  const slug = pm.slug;
+  noStore(); // Ensure we get fresh data
+  
   const article = await prisma.article.findUnique({
     where: { slug: slug, published: true },
     select: {
       title: true,
       excerpt: true,
       featuredImage: true,
-      categories: { select: { name: true } },
     },
   });
 
   if (!article) {
     return {
-      title: 'Article Not Found | PhotoBytes Blog',
-      description: 'The requested article could not be found.',
+      title: 'Article Not Found',
     };
   }
 
-  const keywords = article.categories.map((cat) => cat.name);
-
-  const metadata: Metadata = {
-    title: `${article.title} | PhotoBytes Blog`,
-    description: article.excerpt || 'Read this article on PhotoBytes Blog.',
-    keywords: keywords,
-  };
-
-  if (article.featuredImage) {
-    metadata.openGraph = {
+  return {
+    title: article.title, // This will become "Article Title | PhotoBytes Blog"
+    description: article.excerpt,
+    
+    // Unique social cards for *this specific article*
+    openGraph: {
       title: article.title,
-      description: article.excerpt || '',
-      images: [{ url: article.featuredImage }],
-    };
-    metadata.twitter = {
+      description: article.excerpt || 'A blog post from PhotoBytes Blog',
+      // Use the article's featured image if it exists, otherwise fall back
+      images: [
+        {
+          url: article.featuredImage || '/og-image.png',
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+    twitter: {
       card: 'summary_large_image',
       title: article.title,
-      description: article.excerpt || '',
-      images: [article.featuredImage],
-    };
-  }
-  return metadata;
+      description: article.excerpt || 'A blog post from PhotoBytes Blog',
+      images: [article.featuredImage || '/og-image.png'],
+    },
+  };
 }
 
 // The main page component

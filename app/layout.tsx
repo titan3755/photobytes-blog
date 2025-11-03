@@ -12,10 +12,45 @@ const share_tech = Share_Tech({
   display: 'swap',
 });
 
+// --- START: Enhanced Metadata ---
 export const metadata: Metadata = {
-  title: 'PhotoBytes Blog',
-  description: 'The blog website of PhotoBytes Studios',
+  // This is the base URL for your website
+  metadataBase: new URL('https://photobytes-blog.vercel.app'),
+  
+  title: {
+    default: 'PhotoBytes Blog | Tech, Photography, and Development',
+    template: '%s | PhotoBytes Blog', // Creates "Page Title | PhotoBytes Blog"
+  },
+  description: 'The official blog for PhotoBytes Studios, covering high-quality tech, photography, and development tutorials and insights.',
+  
+  // Open Graph (Social Media)
+  openGraph: {
+    title: 'PhotoBytes Blog',
+    description: 'Tech, photography, and development tutorials and insights.',
+    url: 'https://photobytes-blog.vercel.app',
+    siteName: 'PhotoBytes Blog',
+    // You MUST create this file.
+    // Create a 1200x630px image and save it as /public/og-image.png
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  
+  // Twitter (X)
+  twitter: {
+    card: 'summary_large_image',
+    title: 'PhotoBytes Blog',
+    description: 'Tech, photography, and development tutorials and insights.',
+    images: ['/og-image.png'],
+  },
 };
+// --- END: Enhanced Metadata ---
 
 export default function RootLayout({
   children,

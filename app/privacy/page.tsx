@@ -9,9 +9,9 @@ const atkinson_hyperlegible = Atkinson_Hyperlegible({
 });
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy & Terms of Service | PhotoBytes Studios',
+  title: 'Privacy Policy & Terms of Service | PhotoBytes Blog',
   description:
-    'Read the privacy policy and terms of service for PhotoBytes Studios.',
+    'Read the privacy policy and terms of service for PhotoBytes Blog.',
 };
 
 export default function PrivacyPage() {

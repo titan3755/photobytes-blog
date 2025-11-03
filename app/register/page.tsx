@@ -5,6 +5,12 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Register | PhotoBytes Blog',
+  description: 'Create a new account on PhotoBytes Blog to start sharing your content.',
+};
 
 // Copied GoogleIcon from register page
 const GoogleIcon = () => (

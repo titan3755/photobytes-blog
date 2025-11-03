@@ -1,6 +1,11 @@
 import prisma from '@/lib/prisma';
 import { ServiceName, OperationalStatus } from '@prisma/client';
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import type { Metadata } from 'next';
+export const metadata: Metadata = {
+  title: 'Service Status | PhotoBytes Blog',
+  description: 'Check the current operational status of PhotoBytes services.',
+};
 
 // This forces the page to be re-fetched on every visit
 export const dynamic = 'force-dynamic';

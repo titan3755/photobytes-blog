@@ -7,7 +7,7 @@ import PaginationControls from '@/components/home/PaginationControls';
 import Image from 'next/image';
 
 export const metadata: Metadata = {
-  title: 'Home | PhotoBytes Studios',
+  title: 'Home | PhotoBytes Blog',
   description:
     'Welcome to the PhotoBytes Blog, your source for the latest news and updates.',
 };

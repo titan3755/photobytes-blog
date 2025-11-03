@@ -9,6 +9,12 @@ import { Moon, Sun } from 'lucide-react'; // For theme icons
 import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar'; // For component test
 import NotificationItem from '@/components/dashboard/NotificationItem'; // For component test
 import { Role, type UserNotification, type Notification } from '@prisma/client'; // For types
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Developer Page | PhotoBytes Blog',
+  description: 'A developer testing page for PhotoBytes Blog.',
+};
 
 // Mock data for notification test
 const mockNotification: UserNotification & { notification: Notification } = {

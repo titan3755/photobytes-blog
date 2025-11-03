@@ -5,6 +5,12 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { updateProfile } from './actions'; // We will create this Server Action next
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Edit Profile | PhotoBytes Blog',
+  description: 'Edit your PhotoBytes Blog profile information and settings.',
+};
 
 export default function EditProfilePage() {
   const { data: session, status, update } = useSession(); // Get update function

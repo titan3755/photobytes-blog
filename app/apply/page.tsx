@@ -5,6 +5,13 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ApplicationStatus, Role } from '@prisma/client'; // Import Role
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Apply to be a Blogger | PhotoBytes Blog',
+  description:
+    'Join the PhotoBytes community as a blogger. Share your expertise in technology, photography, and development.',
+};
 
 // Helper component to display status (similar to dashboard)
 function ApplicationStatusDisplay({ status }: { status: ApplicationStatus }) {

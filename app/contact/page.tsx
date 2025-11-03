@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Mail, Phone, MapPin } from 'lucide-react'; // Import icons
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Contact Us | PhotoBytes Blog',
+  description: 'Get in touch with the PhotoBytes Blog team for inquiries, support, or feedback.',
+};
 
 export default function ContactPage() {
   const { data: session, status } = useSession();

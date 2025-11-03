@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation';
 import { createOrder } from './actions';
 import { DollarSign, Calendar, Facebook } from 'lucide-react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Place an Order | PhotoBytes Blog',
+  description: 'Place a custom order for photography, videography, web development, and more with PhotoBytes.',
+};
 
 const workCategories = [
   "Photography (Event)",

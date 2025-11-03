@@ -1,5 +1,11 @@
 import { Suspense } from 'react';
 import LoginForm from './LoginForm';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Login | PhotoBytes Blog',
+  description: 'Access your PhotoBytes Blog account by logging in securely.',
+};
 
 // This is a simple Server Component.
 // It wraps the Client Component in a Suspense boundary,

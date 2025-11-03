@@ -8,6 +8,12 @@ import UserProfileAvatar from '@/components/dashboard/UserProfileAvatar';
 import ProfileActions from './ProfileActions'; // Import the client actions
 import ProfileCharts from './ProfileCharts'; // 1. Import the new chart component
 import type { ChartData } from './ProfileCharts'; // Import chart data type
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Your Profile | PhotoBytes Blog',
+  description: 'View and manage your PhotoBytes Blog profile, articles, and comments.',
+};
 
 // Helper component for stats
 function StatItem({ label, value }: { label: string; value: string | number }) {
