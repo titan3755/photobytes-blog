@@ -114,8 +114,8 @@ export default function LoginForm() {
       {/* Credentials Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
-          type="text" // Use 'text' to allow email or username
-          placeholder="Email or Username"
+          type="email"
+          placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
