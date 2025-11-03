@@ -76,9 +76,9 @@ export default function AboutPage() {
             <div className="flex items-center space-x-4 bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
               <div className="flex-shrink-0">
                 {/* --- START FIX: Changed to <img> tag --- */}
-                <img
+                <Image
                   className="h-16 w-16 rounded-full object-cover" // Tailwind handles size
-                  src="https://scontent.fdac45-1.fna.fbcdn.net/v/t39.30808-6/460079671_1545332019705464_2675145164457896144_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeEPvoUp_XdtgpXwuG5m5c12LVImEpoCX54tUiYSmgJfnmof6jFCICQxsY_kJt-MRG7kyMI2icMRinmXsaSCHkxz&_nc_ohc=_LEo7i_8xD0Q7kNvwG4Zg4I&_nc_oc=Adl6scmH2Z3A9ZRUwGrFXFZ5ACYB57yPW50fs_6jkXEp5vYfT3ai8a8ScZ67ggvyfBY&_nc_zt=23&_nc_ht=scontent.fdac45-1.fna&_nc_gid=JO8VIKAuA1eRCP5ziGqYhw&oh=00_AfdEiZk96ttnMpi934hyqOawrIkISdla3Sh7JRCnB8VbIw&oe=69041CB8"
+                  src="https://i.postimg.cc/L4V7nVSs/me.jpg"
                   alt="Mahmud Al Muhaimin"
                   referrerPolicy="no-referrer" // Added for privacy/loading from FB
                 />
@@ -96,9 +96,9 @@ export default function AboutPage() {
             <div className="flex items-center space-x-4 bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
               <div className="flex-shrink-0">
                  {/* --- START FIX: Changed to <img> tag --- */}
-                <img
+                <Image
                   className="h-16 w-16 rounded-full object-cover" // Tailwind handles size
-                  src="https://scontent.fdac45-1.fna.fbcdn.net/v/t39.30808-6/477943712_1336481487481802_1651012146324337988_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGJgv2vRHXxekpKwnWOsAicknerg8LScbGSd6uDwtJxsUB1Oeq0DLZmxRuKMFI3LCo8Do_aVCnY-mttwJhboCGi&_nc_ohc=msseH9T4EYAQ7kNvwHvn4L3&_nc_oc=AdmodLBVzRXvb6uHyx2P-rw9W9RmIonDoQZRdvsjpQML5VIn6dfaS0Ly8EiWBNWKpo0&_nc_zt=23&_nc_ht=scontent.fdac45-1.fna&_nc_gid=nYVH_qsptKVJQg_jDWHEkw&oh=00_AfcfwPPnjmugR6UXh8vV8cCwhJMnabz5C2RXz7ggyK-7yA&oe=6904202F"
+                  src="https://i.postimg.cc/mrN3888H/adib.jpg"
                   alt="Adib Azwad"
                   referrerPolicy="no-referrer" // Added for privacy/loading from FB
                 />
