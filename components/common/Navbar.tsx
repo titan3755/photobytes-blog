@@ -58,9 +58,42 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme, resolvedTheme } = useTheme();
 
+  // --- START: Added state for scroll behavior ---
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  // --- END: Added state for scroll behavior ---
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // --- START: Added effect for scroll handling ---
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Show navbar if at top or scrolling up
+      if (currentScrollY < lastScrollY.current || currentScrollY < 100) {
+        setIsVisible(true);
+      } else {
+        // Hide navbar if scrolling down and not near the top
+        setIsVisible(false);
+      }
+      // Update last scroll position
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+  // --- END: Added effect for scroll handling ---
 
   // --- Effect to handle clicking outside the dropdown ---
   useEffect(() => {
@@ -129,7 +162,16 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="relative bg-white dark:bg-gray-900 border-b-2 border-gray-100 dark:border-gray-800 z-50 transition-colors duration-200">
+      {/* --- START: Modified Navbar container --- */}
+      <div
+        className={classNames(
+          'fixed inset-x-0 top-0 border-b-2 border-gray-100/50 dark:border-gray-800/50 z-50', // Positioning & Border
+          'bg-white/70 dark:bg-gray-900/70 backdrop-blur-lg', // Glassmorphism/Transparency
+          'transition-transform duration-300 ease-in-out', // Animation
+          isVisible ? 'transform-none' : '-translate-y-full' // Hide/Show logic
+        )}
+      >
+      {/* --- END: Modified Navbar container --- */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center py-6 md:justify-start md:space-x-10">
             <div className="flex justify-start lg:w-0 lg:flex-1">
@@ -153,7 +195,7 @@ export default function Navbar() {
             <div className="-mr-2 -my-2 md:hidden">
               <button
                 type="button"
-                className="bg-white dark:bg-gray-900 rounded-md p-2 inline-flex items-center justify-center text-gray-400 hover:text-gray-500 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                className="bg-white/0 dark:bg-gray-900/0 rounded-md p-2 inline-flex items-center justify-center text-gray-400 hover:text-gray-500 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-600"
                 onClick={() => setMobileMenuOpen(true)}
               >
                 <span className="sr-only">Open menu</span>
@@ -192,7 +234,7 @@ export default function Navbar() {
                       <div className="relative ml-4" ref={dropdownRef}>
                         <button
                           type="button"
-                          className="inline-flex items-center gap-x-2.5 rounded-md bg-white dark:bg-gray-900 px-3 py-1.5 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                          className="inline-flex items-center gap-x-2.5 rounded-md bg-white dark:bg-gray-900/0 px-3 py-1.5 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                           onClick={() => setDropdownOpen(!dropdownOpen)}
                         >
                           <UserAvatar user={session.user} size="small" />
@@ -366,8 +408,8 @@ export default function Navbar() {
                         </Link>
                         
                         {session.user.role === Role.ADMIN && (
-                           <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                              <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
+                            <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                               <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
                                 <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-red-600 hover:bg-red-700">
                                   Admin Panel
                                 </button>
@@ -377,7 +419,7 @@ export default function Navbar() {
                                   Dev Page
                                 </button>
                               </Link>
-                           </div>
+                            </div>
                         )}
 
                         <p className="mt-6 text-center text-base font-medium text-gray-500 dark:text-gray-400">
