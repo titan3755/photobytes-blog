@@ -78,6 +78,8 @@ export default function AboutPage() {
                 {/* --- START FIX: Changed to <img> tag --- */}
                 <Image
                   className="h-16 w-16 rounded-full object-cover" // Tailwind handles size
+                  height={64}
+                  width={64}
                   src="https://i.postimg.cc/L4V7nVSs/me.jpg"
                   alt="Mahmud Al Muhaimin"
                   referrerPolicy="no-referrer" // Added for privacy/loading from FB
@@ -98,6 +100,8 @@ export default function AboutPage() {
                  {/* --- START FIX: Changed to <img> tag --- */}
                 <Image
                   className="h-16 w-16 rounded-full object-cover" // Tailwind handles size
+                  height={64}
+                  width={64}
                   src="https://i.postimg.cc/mrN3888H/adib.jpg"
                   alt="Adib Azwad"
                   referrerPolicy="no-referrer" // Added for privacy/loading from FB

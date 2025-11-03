@@ -36,7 +36,7 @@ export default function RootLayout({
           <AuthProvider>
             <Header />
             {/* 3. Main inherits theme from body */}
-            <main className="mx-auto flex-grow w-full">{children}</main>
+            <main className="mx-auto flex-grow w-full pt-24">{children}</main>
             <Footer />
           </AuthProvider>
         </ReCaptchaProvider>
